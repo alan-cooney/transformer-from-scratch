@@ -1,11 +1,17 @@
+[tool.poetry]
+name = "alan-transformer"
+version = "0.1.0"
+description = ""
+authors = ["Alan <41682961+alan-cooney@users.noreply.github.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "alan_transformer"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+torch = "^1.13.1"
+
+
 [build-system]
-build-backend = "setuptools.build_meta"
-requires = ["setuptools"]
-
-[project]
-dependencies = [
-   "pytest"
-]
-name = "project-name"
-
-version = "0.0.1"
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

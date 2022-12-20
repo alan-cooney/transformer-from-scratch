@@ -44,5 +44,5 @@
     },
     "containerUser": "user",
     // Install any dependencies
-    "postCreateCommand": "pip install ."
+    "postCreateCommand": "poetry config virtualenvs.in-project true && poetry install --with dev"
 }

@@ -52,3 +52,6 @@ RUN pip install \
   toml \
   yapf \
   jupyterlab
+
+# Install poetry
+RUN curl -sSL https://install.python-poetry.org | python3 -
