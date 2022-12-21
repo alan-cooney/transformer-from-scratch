@@ -39,8 +39,17 @@ class MultiHeadAttention(nn.Module):
             torch.rand(d_model, d_model))
 
     def mask(self, attention_pattern: AttentionPatternType) -> AttentionPatternType:
-        """Mask the attention pattern"""
-        return torch.tril(attention_pattern)
+        """Mask the attention pattern
+
+        Values are masked out with minus infinity
+
+        https://arxiv.org/pdf/1706.03762.pdf (p6)
+        """
+        n_tokens: int = attention_pattern.shape[-1]
+        minus_infinity = torch.full((n_tokens, n_tokens), float("-inf"))
+        minus_infinity_triangle = torch.triu(minus_infinity, diagonal=1)
+
+        return attention_pattern + minus_infinity_triangle
 
     def attention(self, query: QueryType, key: KeyType, value: ValueType) -> AttentionOutputType:
         """Attention Calculation
@@ -98,6 +107,7 @@ class MultiHeadAttention(nn.Module):
         attn: AttentionOutputType = self.attention(query, key, value)
         attn_concat: ResidualStreamType = rearrange(
             attn,
+            # (head d_head) is the same size as d_model
             "batch head pos d_head -> batch pos (head d_head)"
         )
 

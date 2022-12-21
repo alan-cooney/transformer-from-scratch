@@ -13,10 +13,11 @@ class TestAttention:
         attention_pattern: AttentionPatternType = torch.tensor(
             [[1., 1], [1, 1]]).unsqueeze(0).unsqueeze(0)
         expected: AttentionPatternType = torch.tensor(
-            [[1., 0], [1, 1]]).unsqueeze(0).unsqueeze(0)
+            [[1., float("-inf")], [1, 1]]).unsqueeze(0).unsqueeze(0)
 
         attention_layer = MultiHeadAttention(d_head=2, d_model=4)
         res = attention_layer.mask(attention_pattern)
+
         assert torch.allclose(res, expected)
 
     def test_attention_simple(self):
@@ -32,34 +33,10 @@ class TestAttention:
         # Create the expected output
         numerator = query @ key.transpose(-2, -1)
         denominator: float = float(math.sqrt(2))
-        masked_attention_pattern = torch.tril(numerator / denominator)
+        frac = numerator / denominator
+        masked_attention_pattern = torch.tril(
+            frac).masked_fill(frac == 0, float("-inf"))
         expected = torch.softmax(masked_attention_pattern, dim=-1) @ value
-
-        # Create the attention layer
-        attention_layer = MultiHeadAttention(d_head=2, d_model=4)
-
-        # Calculate the output
-        output: AttentionOutputType = attention_layer.attention(
-            query, key, value)
-
-        # Check the output
-        assert torch.allclose(output, expected)
-
-    def test_attention_artificial(self):
-        """Test an artificial input where all destination tokens attend to the
-        first src token"""
-        # Create the query, key and value
-        # Always attend to the first token
-        query: QueryType = torch.tensor(
-            [[1., 1], [1, 1]]).unsqueeze(0).unsqueeze(0)
-        key: KeyType = torch.tensor(
-            [[999., 999], [-999, -999]]).unsqueeze(0).unsqueeze(0)
-        value: ValueType = torch.tensor(
-            [[3., 3], [-3, -3]]).unsqueeze(0).unsqueeze(0)
-
-        # Create the expected output
-        expected: AttentionOutputType = torch.tensor(
-            [[3., 3], [3, 3]]).unsqueeze(0).unsqueeze(0)
 
         # Create the attention layer
         attention_layer = MultiHeadAttention(d_head=2, d_model=4)
