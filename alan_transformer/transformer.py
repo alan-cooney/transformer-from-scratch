@@ -1,6 +1,7 @@
 from torch import nn
 from torchtyping import TensorType as TT
 
+
 from alan_transformer.embed_unembed import Embed, Unembed
 from alan_transformer.layer import Layer
 from alan_transformer.positional_encoding import PositionalEncoding

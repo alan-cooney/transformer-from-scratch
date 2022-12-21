@@ -1,3 +1,5 @@
+import math
+
 import torch
 
 from alan_transformer.embed_unembed import Embed, Unembed
@@ -19,7 +21,7 @@ class TestEmbed:
 
         res = Embed(d_vocab, d_model)(tokens)
         # Expected has plus one for the bias
-        expected = torch.ones((1, n_tokens, d_model)) + 1
+        expected = torch.ones((1, n_tokens, d_model)) * math.sqrt(d_model) + 1
 
         assert torch.allclose(res, expected)
 
