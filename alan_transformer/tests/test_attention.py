@@ -2,9 +2,11 @@ import math
 
 import torch
 
-from alan_transformer.attention import (MultiHeadAttention, AttentionOutputType,
+from alan_transformer.attention import (AttentionOutputType,
                                         AttentionPatternType, KeyType,
-                                        QueryType, ValueType, ResidualStreamType)
+                                        MultiHeadAttention, QueryType,
+                                        ResidualStreamType, ValueType)
+from alan_transformer.tests.utils.mock_parameter import MockParameter
 
 
 class TestAttention:
@@ -49,8 +51,8 @@ class TestAttention:
         assert torch.allclose(output, expected)
 
     def test_forward_mock_weights_ones(self, mocker):
-        # Mock the weight random initialisation (use ones instead)
-        mocker.patch("torch.rand", new=torch.ones)
+        # Mock the weight initialisation (use ones instead)
+        mocker.patch("torch.nn.Parameter", new=MockParameter)
 
         # Create a mock residual stream (that sums to 1)
         d_head: int = 64

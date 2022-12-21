@@ -1,6 +1,7 @@
 import torch
 
 from alan_transformer.transformer import Transformer
+from alan_transformer.tests.utils.mock_parameter import MockParameter
 
 
 class TestTransformer:
@@ -12,8 +13,8 @@ class TestTransformer:
     """
 
     def test_architecture_snapshot(self, mocker, snapshot):
-        # Mock the weight random initialisation (use ones instead)
-        mocker.patch("torch.rand", new=torch.ones)
+        # Mock the weight initialisation (use ones instead)
+        mocker.patch("torch.nn.Parameter", new=MockParameter)
 
         d_vocab = 10
         model = Transformer(d_vocab=d_vocab)

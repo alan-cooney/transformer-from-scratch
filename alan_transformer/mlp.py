@@ -1,7 +1,7 @@
-from torch import nn
-from torchtyping import TensorType as TT
 import torch
 from fancy_einsum import einsum
+from torch import nn
+from torchtyping import TensorType as TT
 
 ResidualStreamType = TT["batch", "pos", "d_model"]
 HiddenType = TT["batch", "pos", "d_hidden"]
@@ -19,16 +19,16 @@ class FeedForward(nn.Module):
         super().__init__()
 
         self.weight_inner: TT["d_model", "d_hidden"] = nn.Parameter(
-            torch.rand(d_model, d_hidden))
+            torch.empty(d_model, d_hidden))
 
         self.bias_inner: TT["d_hidden"] = nn.Parameter(
-            torch.rand(d_hidden))
+            torch.empty(d_hidden))
 
         self.weight_outer: TT["d_hidden", "d_model"] = nn.Parameter(
-            torch.rand(d_hidden, d_model))
+            torch.empty(d_hidden, d_model))
 
         self.bias_outer: TT["d_model"] = nn.Parameter(
-            torch.rand(d_model))
+            torch.empty(d_model))
 
     def forward(self, residual_stream: ResidualStreamType) -> ResidualStreamType:
         """Forward pass"""

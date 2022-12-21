@@ -1,9 +1,10 @@
+import math
+
+import torch
+from einops import rearrange
+from fancy_einsum import einsum
 from torch import nn
 from torchtyping import TensorType as TT
-from einops import rearrange
-import math
-import torch
-from fancy_einsum import einsum
 
 QueryType = TT["batch", "head", "dest", "d_head"]
 KeyType = TT["batch", "head", "src", "d_head"]
@@ -28,15 +29,16 @@ class MultiHeadAttention(nn.Module):
 
         # Store d_head sqrt for the attention calculation
         self.d_head_sqrt: float = math.sqrt(d_head)
+
         # Create the parameters
         self.weight_query: QKVWeightType = nn.Parameter(
-            torch.rand(n_heads, d_model, d_head))
+            torch.empty(n_heads, d_model, d_head))
         self.weight_key: QKVWeightType = nn.Parameter(
-            torch.rand(n_heads, d_model, d_head))
+            torch.empty(n_heads, d_model, d_head))
         self.weight_value: QKVWeightType = nn.Parameter(
-            torch.rand(n_heads, d_model, d_head))
+            torch.empty(n_heads, d_model, d_head))
         self.weight_out: TT["d_model", "d_model"] = nn.Parameter(
-            torch.rand(d_model, d_model))
+            torch.empty(d_model, d_model))
 
     def mask(self, attention_pattern: AttentionPatternType) -> AttentionPatternType:
         """Mask the attention pattern

@@ -1,13 +1,13 @@
-from torch import nn
 import torch
 
 from alan_transformer.layer import Layer
+from alan_transformer.tests.utils.mock_parameter import MockParameter
 
 
 class TestLayer:
     def test_layer_forward_ones(self, mocker):
-        # Mock the weight random initialisation (use ones instead)
-        mocker.patch("torch.rand", new=torch.ones)
+        # Mock the weight initialisation (use ones instead)
+        mocker.patch("torch.nn.Parameter", new=MockParameter)
 
         input = torch.ones(1, 2, 2)
 

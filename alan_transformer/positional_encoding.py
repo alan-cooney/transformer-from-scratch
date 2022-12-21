@@ -1,7 +1,6 @@
 import torch
 from torchtyping import TensorType as TT
 
-
 EmbeddingType = TT["batch", "pos", "d_model"]
 PositionalEncodingType = TT["max_tokens", "d_model"]
 

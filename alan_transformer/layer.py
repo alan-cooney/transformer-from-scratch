@@ -1,8 +1,8 @@
-
 from torch import nn
+from torchtyping import TensorType as TT
+
 from alan_transformer.attention import MultiHeadAttention
 from alan_transformer.mlp import FeedForward
-from torchtyping import TensorType as TT
 
 ResidualStreamType = TT["batch", "pos", "d_model"]
 

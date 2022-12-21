@@ -1,9 +1,9 @@
 from torch import nn
-from alan_transformer.layer import Layer
-from alan_transformer.embed_unembed import Embed, Unembed
-from alan_transformer.positional_encoding import PositionalEncoding
 from torchtyping import TensorType as TT
 
+from alan_transformer.embed_unembed import Embed, Unembed
+from alan_transformer.layer import Layer
+from alan_transformer.positional_encoding import PositionalEncoding
 
 TokenizedType = TT["batch", "pos", "d_vocab"]
 ResidualStreamType = TT["batch", "pos", "d_model"]
