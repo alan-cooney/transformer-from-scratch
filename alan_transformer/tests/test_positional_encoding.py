@@ -25,7 +25,7 @@ class TestPositionalEncoding:
             expected_positional_encoding.append(pos_embed)
 
         # Compare against the res
-        layer = PositionalEncoding(d_model, 4)
+        layer = PositionalEncoding(d_model, 1024)
         encoding: TT["batch", "pos", "d_model"] = layer(embedding)
         assert torch.allclose(encoding[0, position, :], torch.tensor(
             expected_positional_encoding))

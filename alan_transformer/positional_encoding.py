@@ -3,6 +3,7 @@ from torchtyping import TensorType as TT
 
 
 EmbeddingType = TT["batch", "pos", "d_model"]
+PositionalEncodingType = TT["max_tokens", "d_model"]
 
 
 class PositionalEncoding(torch.nn.Module):
@@ -28,9 +29,12 @@ class PositionalEncoding(torch.nn.Module):
         pos_encoding: TT["pos", "d_model"] = torch.zeros(max_tokens, d_model)
         pos_encoding[:, 0::2] = torch.sin(inner)
         pos_encoding[:, 1::2] = torch.cos(inner)
-        self.pos_encoding = pos_encoding
+        self.pos_encoding: PositionalEncodingType = pos_encoding
 
         super().__init__()
 
     def forward(self, embedding: EmbeddingType) -> EmbeddingType:
-        return self.pos_encoding + embedding
+        embedding_n_tokens: int = embedding.shape[-2]
+        trimmed_pos_encoding: TT["pos",
+                                 "d_model"] = self.pos_encoding[:embedding_n_tokens, :]
+        return trimmed_pos_encoding + embedding
