@@ -10,7 +10,15 @@ ResidualStreamType = TT["batch", "pos", "d_model"]
 
 
 class Transformer(nn.Module):
-    """Transformer"""
+    """Transformer
+
+    Note that unlike the original paper, this uses an encoder-only architecture
+    instead of encoder-decoder. This is because the original paper was focused
+    on language translation whereas this model will be trained on different
+    tasks.
+
+    Default params are set based on GPT-2 small.
+    """
 
     def __init__(
         self,
