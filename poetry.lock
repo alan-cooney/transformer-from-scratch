@@ -19,6 +19,22 @@ tests = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "mypy (>=0.900
 tests-no-zope = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "mypy (>=0.900,!=0.940)", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins"]
 
 [[package]]
+name = "autopep8"
+version = "2.0.1"
+description = "A tool that automatically formats Python code to conform to the PEP 8 style guide"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "autopep8-2.0.1-py2.py3-none-any.whl", hash = "sha256:be5bc98c33515b67475420b7b1feafc8d32c1a69862498eda4983b45bffd2687"},
+    {file = "autopep8-2.0.1.tar.gz", hash = "sha256:d27a8929d8dcd21c0f4b3859d2d07c6c25273727b98afc984c039df0f0d86566"},
+]
+
+[package.dependencies]
+pycodestyle = ">=2.10.0"
+tomli = {version = "*", markers = "python_version < \"3.11\""}
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -213,6 +229,18 @@ dev = ["pre-commit", "tox"]
 testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
+name = "pycodestyle"
+version = "2.10.0"
+description = "Python style guide checker"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "pycodestyle-2.10.0-py2.py3-none-any.whl", hash = "sha256:8a4eaf0d0495c7395bdab3589ac2db602797d76207242c17d470186815706610"},
+    {file = "pycodestyle-2.10.0.tar.gz", hash = "sha256:347187bdb476329d98f695c213d7295a846d1152ff4fe9bacb8a9590b8ee7053"},
+]
+
+[[package]]
 name = "pytest"
 version = "7.2.0"
 description = "pytest: simple powerful testing with Python"
@@ -368,4 +396,4 @@ test = ["pytest (>=3.0.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "afd4c5d9cc3a2bb889015e9287d65c3b856be94160dc45fd9cff4a6ed91a835b"
+content-hash = "4bd671e3ce2f09b1ba53683d590d4625d7f0b7f28a53cf73fa53efefe264a6b5"

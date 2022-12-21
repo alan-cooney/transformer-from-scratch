@@ -14,13 +14,16 @@ torchtyping = "^0.1.4"
 fancy-einsum = "^0.0.3"
 numpy = "^1.24.0"
 einops = "^0.6.0"
-
-[tool.poetry.scripts]
-test = 'pytest --torchtyping-patch-typeguard'
+typeguard = "^2.13.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.0"
+autopep8 = "^2.0.1"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+# Enable torchtyping patching of typeguard when running pytest
+[tool.pytest.ini_options]
+addopts = "--torchtyping-patch-typeguard --typeguard-packages='alan_transformer'"
