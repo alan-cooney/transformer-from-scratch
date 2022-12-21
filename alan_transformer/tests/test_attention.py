@@ -2,7 +2,7 @@ import math
 
 import torch
 
-from alan_transformer.attention import (AttentionLayer, AttentionOutputType,
+from alan_transformer.attention import (MultiHeadAttention, AttentionOutputType,
                                         AttentionPatternType, KeyType,
                                         QueryType, ValueType, ResidualStreamType)
 
@@ -15,7 +15,7 @@ class TestAttention:
         expected: AttentionPatternType = torch.tensor(
             [[1., 0], [1, 1]]).unsqueeze(0).unsqueeze(0)
 
-        attention_layer = AttentionLayer(d_head=2, d_model=4)
+        attention_layer = MultiHeadAttention(d_head=2, d_model=4)
         res = attention_layer.mask(attention_pattern)
         assert torch.allclose(res, expected)
 
@@ -36,7 +36,7 @@ class TestAttention:
         expected = torch.softmax(masked_attention_pattern, dim=-1) @ value
 
         # Create the attention layer
-        attention_layer = AttentionLayer(d_head=2, d_model=4)
+        attention_layer = MultiHeadAttention(d_head=2, d_model=4)
 
         # Calculate the output
         output: AttentionOutputType = attention_layer.attention(
@@ -62,7 +62,7 @@ class TestAttention:
             [[3., 3], [3, 3]]).unsqueeze(0).unsqueeze(0)
 
         # Create the attention layer
-        attention_layer = AttentionLayer(d_head=2, d_model=4)
+        attention_layer = MultiHeadAttention(d_head=2, d_model=4)
 
         # Calculate the output
         output: AttentionOutputType = attention_layer.attention(
@@ -72,6 +72,7 @@ class TestAttention:
         assert torch.allclose(output, expected)
 
     def test_forward_mock_weights_ones(self, mocker):
+        # Mock the weight random initialisation (use ones instead)
         mocker.patch("torch.rand", new=torch.ones)
 
         # Create a mock residual stream (that sums to 1)
@@ -81,8 +82,8 @@ class TestAttention:
             1, 10, d_model) / d_model
 
         # Get the output
-        attention_layer = AttentionLayer(d_head, d_model)
+        attention_layer = MultiHeadAttention(d_head, d_model)
         res = attention_layer(input)
 
-        # Expect the res (minus 1 for the values) to be the same as the input
-        assert torch.allclose(res - 1, input, atol=1e4)
+        # Expect the res to be the same as the input
+        assert torch.allclose(res, input, atol=1e4)

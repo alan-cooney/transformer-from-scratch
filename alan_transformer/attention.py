@@ -14,8 +14,8 @@ AttentionOutputType = TT["batch", "head", "pos", "d_head"]
 ResidualStreamType = TT["batch", "pos", "d_model"]
 
 
-class AttentionLayer(nn.Module):
-    """Attention Layer"""
+class MultiHeadAttention(nn.Module):
+    """Multi-Head Attention Sub-Layer"""
 
     def __init__(self, d_head: int = 64, d_model: int = 768) -> None:
         """Create the attention layer"""
@@ -82,6 +82,8 @@ class AttentionLayer(nn.Module):
     def forward(self, residual_stream: ResidualStreamType) -> ResidualStreamType:
         """Attention layer forward pass
 
+        Note the residual stream is not added back (or normalized)
+
         https://arxiv.org/pdf/1706.03762.pdf (p5)
         """
         # Create the query, key and value
@@ -104,5 +106,5 @@ class AttentionLayer(nn.Module):
             "batch pos d_model, d_model d_model -> batch pos d_model",
             attn_concat, self.weight_out)
 
-        # Return the attention output plus the residual stream
-        return multi_head_out + residual_stream
+        # Return the attention output
+        return multi_head_out
