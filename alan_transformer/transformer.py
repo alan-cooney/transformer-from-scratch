@@ -26,10 +26,20 @@ class Transformer(nn.Module):
         d_head: int = 64,
         d_hidden: int = 2048,
         d_model: int = 768,
-        d_vocab: int = 50000,
+        d_vocab: int = 50432, # Default of GptNeoX Vocab Size
         max_tokens: int = 1024,
         n_layers: int = 12,
     ) -> None:
+        """Initialise the transformer
+
+        Args:
+            d_head: Attention head dimension
+            d_hidden: MLP dimension
+            d_model: Model (residual stream) dimension
+            d_vocab: Vocab size
+            max_tokens: Maximum tokens per prompt
+            n_layers: Number of layers (attention + mlp = 1 layer)
+        """
         super().__init__()
 
         # Embedding and unembedding
