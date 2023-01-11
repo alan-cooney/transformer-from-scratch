@@ -1,10 +1,13 @@
+from pathlib import Path
+
+import torch
+import torch.nn.functional as F
 from torch import nn, optim, save
 from torch.utils.data import DataLoader
 from torchtyping import TensorType as TT
 from tqdm import tqdm
 
-from pathlib import Path
-from alan_transformer.transformer import Transformer, TokenizedType
+from alan_transformer.transformer import TokenizedType, Transformer
 
 
 def train_loop(
@@ -12,17 +15,19 @@ def train_loop(
     dataloader: DataLoader, 
     epochs: int = 1, 
     save_frequency_batches: int = 10,
-    checkpoint_dir: Path = Path(".checkpoints")
+    checkpoint_dir: Path = Path(".checkpoints"),
+    d_vocab: int = 50432
     ) -> None:
     """Train loop
 
     Args:
-        model (Transformer): Transformer Model
-        dataloader (DataLoader): Data Loader
-        epochs (int, optional): Number of Epochs. Defaults to 1.
-        save_frequency_batches (int, optional): Save model parameters every x batches. Defaults to 10.
-        checkpoint_dir (Path, optional): Checkpoint directory to save parameters
-            to. Defaults to Path(".checkpoints").
+        model: Transformer Model
+        dataloader: Data Loader
+        epochs: Number of Epochs
+        save_frequency_batches: Save model parameters every x batches
+        checkpoint_dir: Checkpoint directory to save parameters to. Defaults to
+            Path(".checkpoints")
+        d_vocab: Vocab size
     """
     # Loss and optimizer settings loosely from
     # https://arxiv.org/pdf/1706.03762.pdf (p8)
@@ -41,9 +46,15 @@ def train_loop(
     for epoch in tqdm(range(epochs), desc="Epochs"):
         
         # Loop over batches
-        for batch, (inputs, targets) in tqdm(enumerate(dataloader), desc="Batches"):
+        for batch_index, batch in tqdm(enumerate(dataloader), desc="Batches"):
+            # One-hot-encode the inputs
+            inputs_tokenized: TT["batch", "pos"] = torch.stack(batch["input_ids"])
+            inputs: TT["batch", "pos", "vocab"] = F.one_hot(inputs_tokenized, num_classes=d_vocab)
+            inputs_excluding_last_pos = inputs[:, :-1, :]
+            targets: TT["batch", "pos", "vocab"] = inputs[:, 1:, :]
+            
             # Forward pass
-            logits: TokenizedType = model(inputs)
+            logits: TokenizedType = model(inputs_excluding_last_pos)
             loss = loss_fn(logits, targets)
 
             # Backward pass
@@ -56,6 +67,6 @@ def train_loop(
             #     print(f"Batch {batch} loss: {loss.item():.4f}")
             
             # Save model parameters
-            if (batch + 1) % save_frequency_batches == 0:
-                save(model.state_dict(), checkpoint_dir / f"model_{epoch}_{batch}.pt")
+            if (batch_index + 1) % save_frequency_batches == 0:
+                save(model.state_dict(), checkpoint_dir / f"model_{epoch}_{batch_index}.pt")
                 
