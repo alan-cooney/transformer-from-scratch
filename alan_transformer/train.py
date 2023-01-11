@@ -49,7 +49,7 @@ def train_loop(
         for batch_index, batch in tqdm(enumerate(dataloader), desc="Batches"):
             # One-hot-encode the inputs
             inputs_tokenized: TT["batch", "pos"] = torch.stack(batch["input_ids"])
-            inputs: TT["batch", "pos", "vocab"] = F.one_hot(inputs_tokenized, num_classes=d_vocab)
+            inputs: TT["batch", "pos", "vocab"] = F.one_hot(inputs_tokenized, num_classes=d_vocab).float()
             inputs_excluding_last_pos = inputs[:, :-1, :]
             targets: TT["batch", "pos", "vocab"] = inputs[:, 1:, :]
             
@@ -63,8 +63,9 @@ def train_loop(
             optimizer.step()
 
             # # Print
-            # if batch % 100 == 0:
-            #     print(f"Batch {batch} loss: {loss.item():.4f}")
+            # if batch_index % 1 == 0:
+            #     print(loss)
+            #     print(f"Batch {batch_index} loss: {loss.item():.4f}")
             
             # Save model parameters
             if (batch_index + 1) % save_frequency_batches == 0:
