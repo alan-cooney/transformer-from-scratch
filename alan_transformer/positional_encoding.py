@@ -16,7 +16,6 @@ class PositionalEncoding(torch.nn.Module):
 
         https://arxiv.org/pdf/1706.03762.pdf (p6)
         """
-        # Create the positional encoding
         # Create everything inside the parentheses
         # (pos/(10000^(2i/d_model))
         positions: TT["pos", 1] = torch.arange(0, max_tokens).unsqueeze(1)

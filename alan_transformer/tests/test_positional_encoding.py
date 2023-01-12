@@ -29,3 +29,12 @@ class TestPositionalEncoding:
         encoding: TT["batch", "pos", "d_model"] = layer(embedding)
         assert torch.allclose(encoding[0, position, :], torch.tensor(
             expected_positional_encoding))
+    
+    def test_numerically_stable(self):
+        """Test that the encoding is numerically stable"""
+        d_model: int = 768
+        positions: int = 1024
+        embedding: TT["batch", "pos", "d_model"] = torch.zeros(1, positions, d_model)*100
+        layer = PositionalEncoding(d_model, positions)
+        encoding: TT["batch", "pos", "d_model"] = layer(embedding)
+        assert torch.isnan(encoding).any() == False
