@@ -6,13 +6,12 @@ from torch import nn, optim, save
 from torch.utils.data import DataLoader
 from torchtyping import TensorType as TT
 from tqdm import tqdm
-from typing import List
 
 from alan_transformer.transformer import TokenizedType, Transformer
 
 
 def one_hot_encode_inputs(
-    batch_inputs: List[TT["pos"]],  
+    batch_inputs: TT["batch", "pos"],  
     d_vocab: int,
     device: torch.device = torch.device("cpu"),
     ) -> TT["batch", "pos", "vocab"]:
@@ -22,12 +21,8 @@ def one_hot_encode_inputs(
         batch: List of input tensors (typically)
         device: Device to move the inputs to
     """
-    inputs_tokenized: TT["batch", "pos"] = torch.stack(batch_inputs, 0)
-    inputs: TT["batch", "pos", "vocab"] = F.one_hot(inputs_tokenized, num_classes=d_vocab)
+    inputs: TT["batch", "pos", "vocab"] = F.one_hot(batch_inputs, num_classes=d_vocab)
     return inputs.float().to(device)
-
-
-
 
 
 def train_loop(
