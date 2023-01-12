@@ -66,9 +66,7 @@ def train_loop(
         
         # Loop over batches
         for batch_index, batch in tqdm(enumerate(dataloader), desc="Batches"):
-            print(batch["input_ids"][0].shape)
-            print(len(batch["input_ids"]))
-            
+
             # One-hot-encode the inputs
             inputs: TT["batch", "pos", "vocab"] = one_hot_encode_inputs(
                 batch["input_ids"], 
@@ -82,21 +80,18 @@ def train_loop(
             # difference between the current tokens and the next tokens).
             inputs_excluding_last_pos = inputs[:, :-1, :]
             targets: TT["batch", "pos", "vocab"] = inputs[:, 1:, :]
-            print(inputs_excluding_last_pos.shape, targets.shape)
             
             # Forward pass
+            optimizer.zero_grad()
             logits: TokenizedType = model(inputs_excluding_last_pos)
-            print(logits.shape)
             loss = loss_fn(logits, targets)
 
             # Backward pass
-            optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
             # Print
             if batch_index % 1 == 0:
-                print(loss)
                 print(f"Batch {batch_index} loss: {loss.item():.4f}")
             
             # Save model parameters
