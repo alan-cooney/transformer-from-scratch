@@ -25,10 +25,10 @@ class Layer(nn.Module):
         """Forward pass"""
         # Attention
         attn = self.attention(residual_stream)
-        attn_add_norm = self.layer_norm_ff(residual_stream + attn)
+        attn_add_norm = residual_stream + self.layer_norm_ff(attn)
 
         # Feed forward
         ff = self.feed_forward(attn_add_norm)
-        ff_add_norm = self.layer_norm_attn(attn_add_norm + ff)
+        ff_add_norm = attn_add_norm + self.layer_norm_attn(ff)
 
         return ff_add_norm
