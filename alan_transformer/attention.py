@@ -21,6 +21,7 @@ class MultiHeadAttention(nn.Module):
     def __init__(self, d_head: int = 64, d_model: int = 768) -> None:
         """Create the attention layer"""
         super().__init__()
+
         # Check the params
         assert d_model % d_head == 0, "d_model must be a multiple of d_head"
 
@@ -48,7 +49,8 @@ class MultiHeadAttention(nn.Module):
         https://arxiv.org/pdf/1706.03762.pdf (p6)
         """
         n_tokens: int = attention_pattern.shape[-1]
-        minus_infinity = torch.full((n_tokens, n_tokens), float("-inf"))
+        minus_infinity = torch.full((n_tokens, n_tokens), float(
+            "-inf"), device=attention_pattern.device)
         minus_infinity_triangle = torch.triu(minus_infinity, diagonal=1)
 
         return attention_pattern + minus_infinity_triangle

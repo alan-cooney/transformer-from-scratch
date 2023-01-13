@@ -2,6 +2,7 @@ import urllib
 from pathlib import Path
 from typing import Dict, List
 
+
 import torch
 from datasets import load_dataset, load_from_disk
 from datasets.dataset_dict import DatasetDict
@@ -15,14 +16,14 @@ from alan_transformer.transformer import Transformer
 
 def create_tokenizer() -> GPTNeoXTokenizerFast:
     return GPTNeoXTokenizerFast.from_pretrained(
-        "EleutherAI/gpt-neox-20b", 
-        pad_token = "<|endoftext|>"
+        "EleutherAI/gpt-neox-20b",
+        pad_token="<|endoftext|>"
     )
 
 
 def tokenize_prompt(text: List[str], tokenizer: GPTNeoXTokenizerFast) -> Dict[str, TT["mapping_batch_item", "pos"]]:
     """Tokenize a prompt
-    
+
     Designed to be used by a dataset mapping function, so it returns a dict with
     key "input_ids" and value of the tokenized text.
 
@@ -30,25 +31,25 @@ def tokenize_prompt(text: List[str], tokenizer: GPTNeoXTokenizerFast) -> Dict[st
         text: List of strings to tokenize (batched by the dataset mapping
         function)
         tokenizer: Tokenizer
-    """    
+    """
     tokenized = tokenizer(
-        text, 
-        padding="max_length", # Pad to the max length
-        truncation=True, # Truncate to the max length
-        max_length=1024, # 1024 is the default max length for our transformer,
+        text,
+        padding="max_length",  # Pad to the max length
+        truncation=True,  # Truncate to the max length
+        max_length=1024,  # 1024 is the default max length for our transformer,
         is_split_into_words=False,
         return_attention_mask=False,
-        return_tensors="pt" # Return a pytorch tensor per prompt
+        return_tensors="pt"  # Return a pytorch tensor per prompt
     )
-    
+
     # Set return type as dict
     return {"input_ids": tokenized["input_ids"]}
 
 
 def create_dataset(
-    data_dir: Path = Path(__file__).parent / ".data", 
+    data_dir: Path = Path(__file__).parent / ".data",
     load_if_exists: bool = True
-    ) -> DatasetDict:
+) -> DatasetDict:
     """Create the Shakespeare Dataset (one prompt per line)
 
     Args:
@@ -59,7 +60,7 @@ def create_dataset(
     dataset_path = data_dir / "shakespeare_dataset"
     if dataset_path.exists() and load_if_exists:
         return load_from_disk(dataset_path)
-    
+
     # Download text file
     data_dir.mkdir(parents=True, exist_ok=True)
     data_path = data_dir / "shakespeare.txt"
@@ -72,9 +73,9 @@ def create_dataset(
     # Tokenize it
     tokenizer = create_tokenizer()
     dataset = dataset.map(
-            lambda examples: tokenize_prompt(examples["text"], tokenizer),
-            batched=True
-        )
+        lambda examples: tokenize_prompt(examples["text"], tokenizer),
+        batched=True
+    )
     dataset.set_format(type='torch', columns=['input_ids'])
 
     # Save the dataset
@@ -82,7 +83,7 @@ def create_dataset(
     return dataset
 
 
-def create_dataloader(dataset: DatasetDict, batch_size: int = 8) -> DataLoader:
+def create_dataloader(dataset: DatasetDict, batch_size: int) -> DataLoader:
     """Convert a dataset into a dataloader
 
     Args:
@@ -90,21 +91,19 @@ def create_dataloader(dataset: DatasetDict, batch_size: int = 8) -> DataLoader:
         batch_size: Batch size
     """
     return DataLoader(
-        dataset["train"], 
-        batch_size=batch_size, 
+        dataset["train"],
+        batch_size=batch_size,
         shuffle=True
     )
 
 
-def train_shakespeare() -> None:
+def train_shakespeare(batch_size: int = 8) -> None:
     dataset = create_dataset()
-    dataloader = create_dataloader(dataset)
+    dataloader = create_dataloader(dataset, batch_size)
 
     model = Transformer()
 
     train_loop(
         model,
         dataloader,
-        device=torch.device("cpu")
     )
-    

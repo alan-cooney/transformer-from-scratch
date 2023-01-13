@@ -1,6 +1,6 @@
+import torch
 from torch import nn
 from torchtyping import TensorType as TT
-
 
 from alan_transformer.embed_unembed import Embed, Unembed
 from alan_transformer.layer import Layer
@@ -26,7 +26,7 @@ class Transformer(nn.Module):
         d_head: int = 64,
         d_hidden: int = 2048,
         d_model: int = 768,
-        d_vocab: int = 50432, # Default of GptNeoX Vocab Size
+        d_vocab: int = 50432,  # Default of GptNeoX Vocab Size
         max_tokens: int = 1024,
         n_layers: int = 12,
     ) -> None:
@@ -48,10 +48,12 @@ class Transformer(nn.Module):
 
         # Positional encoding
         self.positional_encoding = PositionalEncoding(
-            d_model=d_model, max_tokens=max_tokens)
+            d_model=d_model,
+            max_tokens=max_tokens,
+        )
 
         # Layers
-        self.layers = []
+        self.layers = nn.ModuleList([])
         for _layer_idx in range(n_layers):
             self.layers.append(
                 Layer(d_model=d_model, d_head=d_head, d_hidden=d_hidden))
@@ -64,6 +66,7 @@ class Transformer(nn.Module):
         # Loop through layers
         for layer in self.layers:
             x = layer(x)
+        x = self.layers[0](x)
 
         # Unembed and return
         return self.unembed(x)

@@ -8,7 +8,11 @@ PositionalEncodingType = TT["max_tokens", "d_model"]
 class PositionalEncoding(torch.nn.Module):
     """Positional encoding"""
 
-    def __init__(self, d_model: int, max_tokens: int) -> None:
+    def __init__(
+        self,
+        d_model: int,
+        max_tokens: int,
+    ) -> None:
         """Applies positional encoding to embedding
 
         PE(pos,2i) = sin(pos/(10000^(2i/d_model)))
@@ -16,6 +20,8 @@ class PositionalEncoding(torch.nn.Module):
 
         https://arxiv.org/pdf/1706.03762.pdf (p6)
         """
+        super().__init__()
+
         # Create everything inside the parentheses
         # (pos/(10000^(2i/d_model))
         positions: TT["pos", 1] = torch.arange(0, max_tokens).unsqueeze(1)
@@ -27,9 +33,10 @@ class PositionalEncoding(torch.nn.Module):
         pos_encoding: TT["pos", "d_model"] = torch.zeros(max_tokens, d_model)
         pos_encoding[:, 0::2] = torch.sin(inner)
         pos_encoding[:, 1::2] = torch.cos(inner)
-        self.pos_encoding: PositionalEncodingType = pos_encoding
 
-        super().__init__()
+        # Register as a buffer (not a model parameter), so that it's moved to
+        # the correct device on `model.to(device)`.
+        self.register_buffer("pos_encoding", pos_encoding)
 
     def forward(self, embedding: EmbeddingType) -> EmbeddingType:
         embedding_n_tokens: int = embedding.shape[-2]
