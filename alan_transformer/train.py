@@ -1,13 +1,14 @@
 from pathlib import Path
+from typing import Optional
 
 import torch
 import torch.nn.functional as F
-import wandb
 from torch import nn, optim, save
 from torch.utils.data import DataLoader
 from torchtyping import TensorType as TT
-from tqdm import tqdm
+from tqdm import tqdm, trange
 
+import wandb
 from alan_transformer.transformer import Transformer
 from alan_transformer.types import LogitsTT, TokensTT
 
@@ -53,7 +54,8 @@ def train_loop(
     save_frequency_batches: int = 10,
     checkpoint_dir: Path = Path(".checkpoints"),
     d_vocab: int = 50432,
-    device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+    max_batches: Optional[int] = None
 ) -> None:
     """Train loop
 
@@ -69,7 +71,7 @@ def train_loop(
     # Note that the paper also uses a warmup period of 4000 steps (which has not
     # been done here)
     # , betas=(0.9, 0.98), eps=1e-9)
-    optimizer = optim.Adam(model.parameters())
+    optimizer = optim.Adam(model.parameters(), betas=(0.9, 0.98), eps=1e-9)
 
     # Create the checkpoint directory
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
@@ -81,29 +83,40 @@ def train_loop(
     for epoch in tqdm(range(epochs), desc="Epochs"):
 
         # Loop over batches
-        for batch_index, batch in tqdm(enumerate(dataloader), desc="Batches"):
+        with tqdm(enumerate(dataloader), desc="Batches", total=len(dataloader)) as tracked_batches:
+            for batch_index, batch in tracked_batches:
 
-            # Move inputs to the device
-            inputs: TT["batch", "pos", "vocab"] = batch["input_ids"].to(device)
+                # Check not over max_batches
+                if max_batches and batch_index >= max_batches:
+                    break
 
-            # Forward pass
-            optimizer.zero_grad()
-            logits: LogitsTT = model(inputs)
-            loss = cross_entropy_loss(inputs, logits)
+                # Move inputs to the device
+                inputs: TT["batch", "pos",
+                           "vocab"] = batch["input_ids"].to(device)
 
-            # Backward pass
-            loss.backward()
-            optimizer.step()
+                # Forward pass
+                optimizer.zero_grad()
+                logits: LogitsTT = model(inputs)
+                loss = cross_entropy_loss(inputs, logits)
 
-            # Log
-            if batch_index % 100 == 0:
-                wandb.log({
-                    "epoch": epoch,
-                    "batch": batch_index,
-                    "loss": loss.item()
-                })
+                # Backward pass
+                loss.backward()
+                optimizer.step()
 
-            # Save model parameters
-            # if (batch_index + 1) % save_frequency_batches == 0:
-            #     save(model.state_dict(), checkpoint_dir /
-            #          f"model_{epoch}_{batch_index}.pt")
+                # Print
+                if batch_index % 10 == 0:
+                    loss_string = loss.item()
+                    tracked_batches.set_postfix(loss=loss_string)
+
+                # Log
+                if batch_index % 10 == 0 and wandb.run is not None:
+                    wandb.log({
+                        "epoch": epoch,
+                        "batch": batch_index,
+                        "loss": loss.item()
+                    })
+
+                # Save model parameters
+                # if (batch_index + 1) % save_frequency_batches == 0:
+                #     save(model.state_dict(), checkpoint_dir /
+                #          f"model_{epoch}_{batch_index}.pt")
