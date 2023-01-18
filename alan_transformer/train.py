@@ -95,12 +95,8 @@ def train_loop(
             loss.backward()
             optimizer.step()
 
-            # Print
-            if batch_index % 10 == 0:
-                print(f"Batch {batch_index} loss: {loss.item():.4f}")
-
             # Log
-            if batch_index % 10 == 0:
+            if batch_index % 100 == 0:
                 wandb.log({
                     "epoch": epoch,
                     "batch": batch_index,
