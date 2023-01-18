@@ -55,7 +55,7 @@ def train_loop(
     checkpoint_dir: Path = Path(".checkpoints"),
     d_vocab: int = 50432,
     device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
-    max_batches: Optional[int] = None
+    max_batches: Optional[int] = None,
 ) -> None:
     """Train loop
 
@@ -68,16 +68,19 @@ def train_loop(
             Path(".checkpoints")
         d_vocab: Vocab size
     """
+    # Initialise training
+    model.train()  # Run in training mode
+    model.to(device)
+
     # Note that the paper also uses a warmup period of 4000 steps (which has not
     # been done here)
     # , betas=(0.9, 0.98), eps=1e-9)
-    optimizer = optim.Adam(model.parameters(), betas=(0.9, 0.98), eps=1e-9)
+    optimizer = optim.Adam(
+        model.parameters(),
+        lr=1e-3)
 
     # Create the checkpoint directory
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
-
-    # Move model to the device
-    model.to(device)
 
     # Loop over epochs
     for epoch in tqdm(range(epochs), desc="Epochs"):
@@ -91,8 +94,7 @@ def train_loop(
                     break
 
                 # Move inputs to the device
-                inputs: TT["batch", "pos",
-                           "vocab"] = batch["input_ids"].to(device)
+                inputs: TokensTT = batch["input_ids"].to(device)
 
                 # Forward pass
                 optimizer.zero_grad()
