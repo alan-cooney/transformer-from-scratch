@@ -5,8 +5,7 @@ from fancy_einsum import einsum
 from torch import nn
 from torchtyping import TensorType as TT
 
-TokenizedType = TT["batch", "pos", "d_vocab"]
-ResidualStreamType = TT["batch", "pos", "d_model"]
+from alan_transformer.types import ResidualStreamTT, TokensTT, LogitsTT
 
 
 class Embed(nn.Module):
@@ -17,15 +16,15 @@ class Embed(nn.Module):
 
         self.d_model: int = d_model
 
-        self.embed_weights: TT["d_vocab", "d_model"] = nn.Parameter(
+        self.embed_weights: TT["vocab", "d_model"] = nn.Parameter(
             torch.empty(d_vocab, d_model))
 
         self.embed_bias: TT["d_model"] = nn.Parameter(torch.empty(d_model))
 
-    def forward(self, tokens: TokenizedType) -> ResidualStreamType:
+    def forward(self, tokens: TokensTT) -> ResidualStreamTT:
         """Forward pass"""
-        embed_pre_bias = einsum(
-            "batch pos d_vocab, d_vocab d_model -> batch pos d_model", tokens, self.embed_weights)
+        # Index into weights (with the tokens)
+        embed_pre_bias: ResidualStreamTT = self.embed_weights[tokens, :]
 
         # Note the paper multiplies the embedding weights by sqrt(d_model),
         # which is equivalent to doing this here
@@ -44,14 +43,17 @@ class Unembed(nn.Module):
     def __init__(self, d_vocab: int, d_model: int) -> None:
         super().__init__()
 
-        self.unembed_weights: TT["d_model", "d_vocab"] = nn.Parameter(
+        self.unembed_weights: TT["d_model", "vocab"] = nn.Parameter(
             torch.empty(d_model, d_vocab))
 
-        self.embed_bias: TT["d_vocab"] = nn.Parameter(torch.empty(d_vocab))
+        self.embed_bias: TT["vocab"] = nn.Parameter(torch.empty(d_vocab))
 
-    def forward(self, residual_stream: ResidualStreamType) -> TokenizedType:
+    def forward(self, residual_stream: ResidualStreamTT) -> LogitsTT:
         """Forward pass"""
         unembed_pre_bias = einsum(
-            "batch pos d_model, d_model d_vocab -> batch pos d_vocab", residual_stream, self.unembed_weights)
+            "batch pos model, model vocab -> batch pos vocab",
+            residual_stream,
+            self.unembed_weights
+        )
 
         return unembed_pre_bias + self.embed_bias

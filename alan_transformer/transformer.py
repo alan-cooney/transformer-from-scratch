@@ -5,9 +5,7 @@ from torchtyping import TensorType as TT
 from alan_transformer.embed_unembed import Embed, Unembed
 from alan_transformer.layer import Layer
 from alan_transformer.positional_encoding import PositionalEncoding
-
-TokenizedType = TT["batch", "pos", "d_vocab"]
-ResidualStreamType = TT["batch", "pos", "d_model"]
+from alan_transformer.types import TokensTT, ResidualStreamTT, LogitsTT
 
 
 class Transformer(nn.Module):
@@ -58,9 +56,9 @@ class Transformer(nn.Module):
             self.layers.append(
                 Layer(d_model=d_model, d_head=d_head, d_hidden=d_hidden))
 
-    def forward(self, tokens: TokenizedType) -> TokenizedType:
+    def forward(self, tokens: TT["batch", "pos"]) -> LogitsTT:
         # Embed + positional encoding
-        x: ResidualStreamType = self.embed(tokens)
+        x: ResidualStreamTT = self.embed(tokens)
         x = self.positional_encoding(x)
 
         # Loop through layers

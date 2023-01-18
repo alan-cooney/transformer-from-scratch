@@ -2,7 +2,7 @@ import torch
 from torch import nn
 
 
-class MockParameter(nn.Parameter):
+class MockParameterOnes(nn.Parameter):
     """Helper to set mocked parameters to ones"""
 
     def __init__(self, data: torch.Tensor):

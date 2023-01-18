@@ -3,8 +3,9 @@ from fancy_einsum import einsum
 from torch import nn
 from torchtyping import TensorType as TT
 
-ResidualStreamType = TT["batch", "pos", "d_model"]
-HiddenType = TT["batch", "pos", "d_hidden"]
+from alan_transformer.types import ResidualStreamTT
+
+HiddenTT = TT["batch", "pos", "d_hidden"]
 
 
 class FeedForward(nn.Module):
@@ -30,15 +31,15 @@ class FeedForward(nn.Module):
         self.bias_outer: TT["d_model"] = nn.Parameter(
             torch.empty(d_model))
 
-    def forward(self, residual_stream: ResidualStreamType) -> ResidualStreamType:
+    def forward(self, residual_stream: ResidualStreamTT) -> ResidualStreamTT:
         """Forward pass"""
         # Inner = relu(x W1 + b1)
-        inner_pre_bias: HiddenType = einsum(
+        inner_pre_bias: HiddenTT = einsum(
             "batch pos d_model, d_model d_hidden -> batch pos d_hidden", residual_stream, self.weight_inner)
         inner = inner_pre_bias + self.bias_inner
-        inner_relu: HiddenType = torch.relu(inner)
+        inner_relu: HiddenTT = torch.relu(inner)
 
         # Outer = inner @ W2 + b2
-        outer_pre_bias: ResidualStreamType = einsum(
+        outer_pre_bias: ResidualStreamTT = einsum(
             "batch pos d_hidden, d_hidden d_model -> batch pos d_model", inner_relu, self.weight_outer)
         return outer_pre_bias + self.bias_outer

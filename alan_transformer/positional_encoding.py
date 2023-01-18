@@ -1,8 +1,7 @@
 import torch
 from torchtyping import TensorType as TT
 
-EmbeddingType = TT["batch", "pos", "d_model"]
-PositionalEncodingType = TT["max_tokens", "d_model"]
+from alan_transformer.types import ResidualStreamTT
 
 
 class PositionalEncoding(torch.nn.Module):
@@ -38,7 +37,7 @@ class PositionalEncoding(torch.nn.Module):
         # the correct device on `model.to(device)`.
         self.register_buffer("pos_encoding", pos_encoding)
 
-    def forward(self, embedding: EmbeddingType) -> EmbeddingType:
+    def forward(self, embedding: ResidualStreamTT) -> ResidualStreamTT:
         embedding_n_tokens: int = embedding.shape[-2]
         trimmed_pos_encoding: TT["pos",
                                  "d_model"] = self.pos_encoding[:embedding_n_tokens, :]

@@ -1,10 +1,8 @@
 from torch import nn
-from torchtyping import TensorType as TT
 
 from alan_transformer.attention import MultiHeadAttention
 from alan_transformer.mlp import FeedForward
-
-ResidualStreamType = TT["batch", "pos", "d_model"]
+from alan_transformer.types import ResidualStreamTT
 
 
 class Layer(nn.Module):
@@ -21,7 +19,7 @@ class Layer(nn.Module):
         self.attention = MultiHeadAttention(d_head=d_head, d_model=d_model)
         self.layer_norm_attn = nn.LayerNorm(d_model)
 
-    def forward(self, residual_stream: ResidualStreamType) -> ResidualStreamType:
+    def forward(self, residual_stream: ResidualStreamTT) -> ResidualStreamTT:
         """Forward pass"""
         # Attention
         attn = self.attention(residual_stream)

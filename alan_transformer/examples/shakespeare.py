@@ -2,7 +2,6 @@ import urllib
 from pathlib import Path
 from typing import Dict, List
 
-
 import torch
 from datasets import load_dataset, load_from_disk
 from datasets.dataset_dict import DatasetDict
@@ -10,13 +9,14 @@ from torch.utils.data import DataLoader, dataset
 from torchtyping import TensorType as TT
 from transformers import GPTNeoXTokenizerFast
 
+import wandb
 from alan_transformer.train import train_loop
 from alan_transformer.transformer import Transformer
 
 
 def create_tokenizer() -> GPTNeoXTokenizerFast:
     return GPTNeoXTokenizerFast.from_pretrained(
-        "EleutherAI/gpt-neox-20b",
+        "gpt2",
         pad_token="<|endoftext|>"
     )
 
@@ -97,7 +97,7 @@ def create_dataloader(dataset: DatasetDict, batch_size: int) -> DataLoader:
     )
 
 
-def train_shakespeare(batch_size: int = 8) -> None:
+def train_shakespeare(batch_size: int = 4) -> None:
     dataset = create_dataset()
     dataloader = create_dataloader(dataset, batch_size)
 
@@ -107,3 +107,9 @@ def train_shakespeare(batch_size: int = 8) -> None:
         model,
         dataloader,
     )
+
+
+if __name__ == "__main__":
+    wandb.login()
+    wandb.init(project="transformer-from-scratch")
+    train_shakespeare()

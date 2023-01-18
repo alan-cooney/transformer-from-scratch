@@ -2,28 +2,48 @@ from pathlib import Path
 
 import torch
 import torch.nn.functional as F
+import wandb
 from torch import nn, optim, save
 from torch.utils.data import DataLoader
 from torchtyping import TensorType as TT
 from tqdm import tqdm
 
-from alan_transformer.transformer import TokenizedType, Transformer
+from alan_transformer.transformer import Transformer
+from alan_transformer.types import LogitsTT, TokensTT
 
 
-def one_hot_encode_inputs(
-    batch_inputs: TT["batch", "pos"],
-    d_vocab: int,
-    device: torch.device = torch.device("cpu"),
-) -> TT["batch", "pos", "vocab"]:
-    """One hot encode a batch of inputs
+def cross_entropy_loss(
+    inputs: TokensTT,
+    logits: LogitsTT,
+) -> TT[()]:
+    """Loss function
 
-    Args:
-        batch: List of input tensors (typically)
-        device: Device to move the inputs to
+    Loss is calculated from the difference between log probs of the 
+
+    https://arxiv.org/pdf/1706.03762.pdf (p8)
+
+    Params:
+        Input: Input tokens
+        logits: Logits from the forward pass
+s
+    Returns:
+        Log loss
     """
-    moved: TT["batch", "pos"] = batch_inputs.to(device)
-    inputs: TT["batch", "pos", "vocab"] = F.one_hot(moved, num_classes=d_vocab)
-    return inputs.float().to(device)
+    # Targets are inputs except for the first one (which we aren't predicting)
+    # Logits except last exclude the last one (which we don't have a target for)
+    target: TT["batch", "pos_minus_1"] = inputs[:, 1:]
+    logits_except_last: TT["batch", "pos_minus_1", "d_vocab"] = \
+        logits[:, :-1, :].float()
+
+    log_probs: TT["batch", "pos_minus_1", "d_vocab"] = \
+        F.log_softmax(logits_except_last, dim=-1)
+
+    # Predicted log probs are the log probs of the correct tokens
+    index: TT["batch", "pos_mins_1", 1] = target.unsqueeze(-1)
+    predicted_log_probs = log_probs.gather(-1, index)
+
+    # Cross entropy loss
+    return -predicted_log_probs.mean()
 
 
 def train_loop(
@@ -46,12 +66,6 @@ def train_loop(
             Path(".checkpoints")
         d_vocab: Vocab size
     """
-    # Loss and optimizer settings loosely from
-    # https://arxiv.org/pdf/1706.03762.pdf (p8)
-    # Note that a residual dropout of 0.1 was also used in the paper (which has
-    # not been done here)
-    loss_fn = nn.CrossEntropyLoss()
-
     # Note that the paper also uses a warmup period of 4000 steps (which has not
     # been done here)
     # , betas=(0.9, 0.98), eps=1e-9)
@@ -69,34 +83,31 @@ def train_loop(
         # Loop over batches
         for batch_index, batch in tqdm(enumerate(dataloader), desc="Batches"):
 
-            # One-hot-encode the inputs
-            inputs: TT["batch", "pos", "vocab"] = one_hot_encode_inputs(
-                batch["input_ids"],
-                d_vocab,
-                device
-            )
-
-            # Get the inputs & targets for training
-            # We use all baring the last token for the inputs, and then offset
-            # by 1 for the targets (as we're measuring the loss as the
-            # difference between the current tokens and the next tokens).
-            inputs_excluding_last_pos = inputs[:, :-1, :]
-            targets: TT["batch", "pos", "vocab"] = inputs[:, 1:, :]
+            # Move inputs to the device
+            inputs: TT["batch", "pos", "vocab"] = batch["input_ids"].to(device)
 
             # Forward pass
             optimizer.zero_grad()
-            logits: TokenizedType = model(inputs_excluding_last_pos)
-            loss = loss_fn(logits, targets)
+            logits: LogitsTT = model(inputs)
+            loss = cross_entropy_loss(inputs, logits)
 
             # Backward pass
             loss.backward()
             optimizer.step()
 
             # Print
-            if batch_index % 1 == 0:
+            if batch_index % 10 == 0:
                 print(f"Batch {batch_index} loss: {loss.item():.4f}")
 
+            # Log
+            if batch_index % 10 == 0:
+                wandb.log({
+                    "epoch": epoch,
+                    "batch": batch_index,
+                    "loss": loss.item()
+                })
+
             # Save model parameters
-            if (batch_index + 1) % save_frequency_batches == 0:
-                save(model.state_dict(), checkpoint_dir /
-                     f"model_{epoch}_{batch_index}.pt")
+            # if (batch_index + 1) % save_frequency_batches == 0:
+            #     save(model.state_dict(), checkpoint_dir /
+            #          f"model_{epoch}_{batch_index}.pt")

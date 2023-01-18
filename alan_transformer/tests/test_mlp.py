@@ -1,14 +1,14 @@
 import torch
 
 from alan_transformer.mlp import FeedForward
-from alan_transformer.tests.utils.mock_parameter import MockParameter
+from alan_transformer.tests.utils.mock_parameter import MockParameterOnes
 
 
 class TestFeedForward:
 
     def test_weights_biases_ones(self, mocker):
         # Mock the weight initialisation (use ones instead)
-        mocker.patch("torch.nn.Parameter", new=MockParameter)
+        mocker.patch("torch.nn.Parameter", new=MockParameterOnes)
 
         # Create the layer
         layer = FeedForward(d_model=2, d_hidden=2)
