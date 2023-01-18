@@ -18,7 +18,7 @@ ResidualStreamTT = TT["batch", "pos", "d_model"]
 class MultiHeadAttention(nn.Module):
     """Multi-Head Attention Sub-Layer"""
 
-    def __init__(self, d_head: int = 64, d_model: int = 768) -> None:
+    def __init__(self, d_head: int = 64, d_model: int = 768, max_tokens: int = 1024) -> None:
         """Create the attention layer"""
         super().__init__()
 
@@ -41,6 +41,12 @@ class MultiHeadAttention(nn.Module):
         self.weight_out: TT["d_model", "d_model"] = nn.Parameter(
             torch.empty(d_model, d_model))
 
+        # Create the minus infinity mask
+        minus_infinity = torch.full((max_tokens, max_tokens), float("-inf"))
+        minus_infinity_triangle = torch.triu(minus_infinity, diagonal=1)
+        self.register_buffer("minus_infinity_triangle",
+                             minus_infinity_triangle)
+
     def mask(self, attention_pattern: AttentionPatternTT) -> AttentionPatternTT:
         """Mask the attention pattern
 
@@ -49,11 +55,7 @@ class MultiHeadAttention(nn.Module):
         https://arxiv.org/pdf/1706.03762.pdf (p6)
         """
         n_tokens: int = attention_pattern.shape[-1]
-        minus_infinity = torch.full((n_tokens, n_tokens), float(
-            "-inf"), device=attention_pattern.device)
-        minus_infinity_triangle = torch.triu(minus_infinity, diagonal=1)
-
-        return attention_pattern + minus_infinity_triangle
+        return attention_pattern + self.minus_infinity_triangle[:n_tokens, :n_tokens]
 
     def attention(self, query: QueryTT, key: KeyTT, value: ValueTT) -> AttentionOutputTT:
         """Attention Calculation

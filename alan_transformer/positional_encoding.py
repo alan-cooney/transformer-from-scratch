@@ -33,8 +33,6 @@ class PositionalEncoding(torch.nn.Module):
         pos_encoding[:, 0::2] = torch.sin(inner)
         pos_encoding[:, 1::2] = torch.cos(inner)
 
-        # Register as a buffer (not a model parameter), so that it's moved to
-        # the correct device on `model.to(device)`.
         self.register_buffer("pos_encoding", pos_encoding)
 
     def forward(self, embedding: ResidualStreamTT) -> ResidualStreamTT:

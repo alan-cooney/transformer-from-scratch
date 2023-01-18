@@ -10,13 +10,13 @@ class Layer(nn.Module):
 
     https://arxiv.org/pdf/1706.03762.pdf (p3)"""
 
-    def __init__(self, d_model: int = 768, d_head: int = 64, d_hidden: int = 2048):
+    def __init__(self, d_model: int = 768, d_head: int = 64, d_hidden: int = 2048, max_tokens: int = 1024):
         super().__init__()
 
         # Create the feed forward and attention sub-layers
         self.feed_forward = FeedForward(d_model=d_model, d_hidden=d_hidden)
         self.layer_norm_ff = nn.LayerNorm(d_model)
-        self.attention = MultiHeadAttention(d_head=d_head, d_model=d_model)
+        self.attention = MultiHeadAttention(d_head, d_model, max_tokens)
         self.layer_norm_attn = nn.LayerNorm(d_model)
 
     def forward(self, residual_stream: ResidualStreamTT) -> ResidualStreamTT:
