@@ -64,7 +64,6 @@ class Transformer(nn.Module):
         # Loop through layers
         for layer in self.layers:
             x = layer(x)
-        x = self.layers[0](x)
 
         # Unembed and return
         return self.unembed(x)
