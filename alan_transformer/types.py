@@ -1,10 +1,9 @@
 """Shared types"""
-from enum import Enum
-from torchtyping import TensorType as TT
+from jaxtyping import Float
+from torch import Tensor
 
+TokensTT = Float[Tensor, "batch pos"]
 
-TokensTT = TT["batch", "pos"]
+ResidualStreamTT = Float[Tensor, "batch pos d_model"]
 
-ResidualStreamTT = TT["batch", "pos", "d_model"]
-
-LogitsTT = TT["batch", "pos", "d_vocab"]
+LogitsTT = Float[Tensor, "batch pos d_vocab"]

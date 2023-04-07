@@ -4,15 +4,17 @@ import torch
 from einops import rearrange
 from fancy_einsum import einsum
 from torch import nn
-from torchtyping import TensorType as TT
+from jaxtyping import Float
+from torch import Tensor
 
-QueryTT = TT["batch", "head", "dest", "d_head"]
-KeyTT = TT["batch", "head", "src", "d_head"]
-ValueTT = TT["batch", "head", "src", "d_head"]
-QKVWeightTT = TT["head", "d_model", "d_head"]
-AttentionPatternTT = TT["batch", "head", "dest", "src"]
-AttentionOutputTT = TT["batch", "head", "pos", "d_head"]
-ResidualStreamTT = TT["batch", "pos", "d_model"]
+
+QueryTT = Float[Tensor, "batch head dest d_head"]
+KeyTT = Float[Tensor, "batch head src d_head"]
+ValueTT = Float[Tensor, "batch head src d_head"]
+QKVWeightTT = Float[Tensor, "head d_model d_head"]
+AttentionPatternTT = Float[Tensor, "batch head dest src"]
+AttentionOutputTT = Float[Tensor, "batch head pos d_head"]
+ResidualStreamTT = Float[Tensor, "batch pos d_model"]
 
 
 class MultiHeadAttention(nn.Module):
@@ -38,7 +40,7 @@ class MultiHeadAttention(nn.Module):
             torch.empty(n_heads, d_model, d_head))
         self.weight_value: QKVWeightTT = nn.Parameter(
             torch.empty(n_heads, d_model, d_head))
-        self.weight_out: TT["d_model", "d_model"] = nn.Parameter(
+        self.weight_out: Float[Tensor, "d_model d_model"] = nn.Parameter(
             torch.empty(d_model, d_model))
 
         # Create the minus infinity mask
@@ -73,7 +75,7 @@ class MultiHeadAttention(nn.Module):
             AttentionOutputTT: Attention Output (softmax * value)
         """
         # Calculate the numerator
-        key_transpose: TT["batch", "head", "d_head", "pos"] = rearrange(
+        key_transpose: Float[Tensor, "batch head d_head pos"] = rearrange(
             key,
             "batch head pos d_head -> batch head d_head pos"
         )

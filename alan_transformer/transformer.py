@@ -1,7 +1,6 @@
 import torch
-from torch import nn
-from torchtyping import TensorType as TT
-
+from torch import nn, Tensor
+from jaxtyping import Float
 from alan_transformer.embed_unembed import Embed, Unembed
 from alan_transformer.layer import Layer
 from alan_transformer.positional_encoding import PositionalEncoding
@@ -56,7 +55,7 @@ class Transformer(nn.Module):
             self.layers.append(
                 Layer(d_model=d_model, d_head=d_head, d_hidden=d_hidden))
 
-    def forward(self, tokens: TT["batch", "pos"]) -> LogitsTT:
+    def forward(self, tokens: Float[Tensor, "batch pos"]) -> LogitsTT:
         # Embed + positional encoding
         x: ResidualStreamTT = self.embed(tokens)
         x = self.positional_encoding(x)

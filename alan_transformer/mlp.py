@@ -1,11 +1,11 @@
 import torch
 from fancy_einsum import einsum
-from torch import nn
-from torchtyping import TensorType as TT
+from torch import nn, Tensor
+from jaxtyping import Float
 
 from alan_transformer.types import ResidualStreamTT
 
-HiddenTT = TT["batch", "pos", "d_hidden"]
+HiddenTT = Float[Tensor, "batch pos d_hidden"]
 
 
 class FeedForward(nn.Module):
@@ -19,16 +19,16 @@ class FeedForward(nn.Module):
     def __init__(self, d_model: int = 768, d_hidden: int = 2048) -> None:
         super().__init__()
 
-        self.weight_inner: TT["d_model", "d_hidden"] = nn.Parameter(
+        self.weight_inner: Float[Tensor, "d_model d_hidden"] = nn.Parameter(
             torch.empty(d_model, d_hidden))
 
-        self.bias_inner: TT["d_hidden"] = nn.Parameter(
+        self.bias_inner: Float[Tensor, "d_hidden"] = nn.Parameter(
             torch.empty(d_hidden))
 
-        self.weight_outer: TT["d_hidden", "d_model"] = nn.Parameter(
+        self.weight_outer: Float[Tensor, "d_hidden d_model"] = nn.Parameter(
             torch.empty(d_hidden, d_model))
 
-        self.bias_outer: TT["d_model"] = nn.Parameter(
+        self.bias_outer: Float[Tensor, "d_model"] = nn.Parameter(
             torch.empty(d_model))
 
     def forward(self, residual_stream: ResidualStreamTT) -> ResidualStreamTT:

@@ -1,6 +1,8 @@
 {
     "cSpell.words": [
         "allclose",
+        "arange",
+        "elementwise",
         "torchtyping",
         "Unembed",
         "unembedding"

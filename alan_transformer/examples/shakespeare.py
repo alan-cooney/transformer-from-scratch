@@ -6,7 +6,8 @@ import torch
 from datasets import load_dataset, load_from_disk
 from datasets.dataset_dict import DatasetDict
 from torch.utils.data import DataLoader, dataset
-from torchtyping import TensorType as TT
+from torch import Tensor
+from jaxtyping import Float
 from transformers import GPTNeoXTokenizerFast
 
 import wandb
@@ -21,7 +22,7 @@ def create_tokenizer() -> GPTNeoXTokenizerFast:
     )
 
 
-def tokenize_prompt(text: List[str], tokenizer: GPTNeoXTokenizerFast) -> Dict[str, TT["mapping_batch_item", "pos"]]:
+def tokenize_prompt(text: List[str], tokenizer: GPTNeoXTokenizerFast) -> Dict[str, Float[Tensor, "mapping_batch_item pos"]]:
     """Tokenize a prompt
 
     Designed to be used by a dataset mapping function, so it returns a dict with

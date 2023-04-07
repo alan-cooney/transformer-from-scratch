@@ -4,7 +4,8 @@ import torch
 
 from alan_transformer.embed_unembed import Embed, Unembed
 from alan_transformer.tests.utils.mock_parameter import MockParameterOnes
-from torchtyping import TensorType as TT
+from jaxtyping import Float
+from torch import Tensor
 
 
 class TestEmbed:
@@ -18,7 +19,7 @@ class TestEmbed:
         # Set the dummy parameters so that each token is embedded as a list of
         # that number (e.g. token 3 -> [3 for _ in d_model])
         state = layer.state_dict()
-        new_embed_weights: TT["vocab", "d_model"] = torch.arange(
+        new_embed_weights: Float[Tensor, "vocab d_model"] = torch.arange(
             0, d_vocab).repeat(d_model, 1).T
         state["embed_weights"] = new_embed_weights
         # Set the bias as 0 for simplicity

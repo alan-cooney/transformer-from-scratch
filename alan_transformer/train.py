@@ -3,9 +3,9 @@ from typing import Optional
 
 import torch
 import torch.nn.functional as F
-from torch import nn, optim, save
+from torch import optim, Tensor
 from torch.utils.data import DataLoader
-from torchtyping import TensorType as TT
+from jaxtyping import Float
 from tqdm import tqdm, trange
 
 import wandb
@@ -16,7 +16,7 @@ from alan_transformer.types import LogitsTT, TokensTT
 def cross_entropy_loss(
     inputs: TokensTT,
     logits: LogitsTT,
-) -> TT[()]:
+) -> Float[Tensor, ()]:
     """Loss function
 
     Loss is calculated from the difference between log probs of the 
@@ -32,15 +32,15 @@ s
     """
     # Targets are inputs except for the first one (which we aren't predicting)
     # Logits except last exclude the last one (which we don't have a target for)
-    target: TT["batch", "pos_minus_1"] = inputs[:, 1:]
-    logits_except_last: TT["batch", "pos_minus_1", "d_vocab"] = \
+    target: Float[Tensor, "batch pos_minus_1"] = inputs[:, 1:]
+    logits_except_last: Float[Tensor, "batch pos_minus_1 d_vocab"] = \
         logits[:, :-1, :].float()
 
-    log_probs: TT["batch", "pos_minus_1", "d_vocab"] = \
+    log_probs: Float[Tensor, "batch pos_minus_1 d_vocab"] = \
         F.log_softmax(logits_except_last, dim=-1)
 
     # Predicted log probs are the log probs of the correct tokens
-    index: TT["batch", "pos_mins_1", 1] = target.unsqueeze(-1)
+    index: Float[Tensor, "batch pos_mins_1", 1] = target.unsqueeze(-1)
     predicted_log_probs = log_probs.gather(-1, index)
 
     # Cross entropy loss

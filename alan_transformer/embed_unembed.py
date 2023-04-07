@@ -2,8 +2,8 @@ import math
 
 import torch
 from fancy_einsum import einsum
-from torch import nn
-from torchtyping import TensorType as TT
+from torch import nn, Tensor
+from jaxtyping import Float
 
 from alan_transformer.types import ResidualStreamTT, TokensTT, LogitsTT
 
@@ -16,10 +16,11 @@ class Embed(nn.Module):
 
         self.d_model: int = d_model
 
-        self.embed_weights: TT["vocab", "d_model"] = nn.Parameter(
+        self.embed_weights: Float[Tensor, "vocab d_model"] = nn.Parameter(
             torch.empty(d_vocab, d_model))
 
-        self.embed_bias: TT["d_model"] = nn.Parameter(torch.empty(d_model))
+        self.embed_bias: Float[Tensor, "d_model"] = nn.Parameter(
+            torch.empty(d_model))
 
     def forward(self, tokens: TokensTT) -> ResidualStreamTT:
         """Forward pass"""
@@ -43,10 +44,11 @@ class Unembed(nn.Module):
     def __init__(self, d_vocab: int, d_model: int) -> None:
         super().__init__()
 
-        self.unembed_weights: TT["d_model", "vocab"] = nn.Parameter(
+        self.unembed_weights: Float[Tensor, "d_model vocab"] = nn.Parameter(
             torch.empty(d_model, d_vocab))
 
-        self.embed_bias: TT["vocab"] = nn.Parameter(torch.empty(d_vocab))
+        self.embed_bias: Float[Tensor, "vocab"] = nn.Parameter(
+            torch.empty(d_vocab))
 
     def forward(self, residual_stream: ResidualStreamTT) -> LogitsTT:
         """Forward pass"""

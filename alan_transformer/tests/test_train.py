@@ -3,7 +3,6 @@ from torch.nn import functional as F
 
 from alan_transformer.train import cross_entropy_loss
 from alan_transformer.types import LogitsTT, TokensTT
-from torchtyping import TensorType as TT
 
 
 class TestCrossEntropyLoss:
