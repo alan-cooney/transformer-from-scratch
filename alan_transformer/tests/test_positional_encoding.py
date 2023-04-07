@@ -1,17 +1,18 @@
 import math
 
 import torch
-from torchtyping import TensorType as TT
+from torch import Tensor
+from jaxtyping import Float
 
 from alan_transformer.positional_encoding import PositionalEncoding
 
 
 class TestPositionalEncoding:
-    def test_pos_encoding_2_token(self):
+    def test_positional_encoding_for_specific_token(self):
         """Test the pos=2 token"""
         # Set the embedding to zeros
         d_model: int = 4
-        embedding: TT["batch", "pos", "d_model"] = torch.zeros(
+        embedding: Float[Tensor, "batch pos d_model"] = torch.zeros(
             1, 4, d_model)
 
         # Create the expected positional encoding
@@ -26,15 +27,57 @@ class TestPositionalEncoding:
 
         # Compare against the res
         layer = PositionalEncoding(d_model, 1024)
-        encoding: TT["batch", "pos", "d_model"] = layer(embedding)
+        encoding: Float[Tensor, "batch pos d_model"] = layer(embedding)
         assert torch.allclose(encoding[0, position, :], torch.tensor(
             expected_positional_encoding))
-    
+
     def test_numerically_stable(self):
         """Test that the encoding is numerically stable"""
         d_model: int = 768
-        positions: int = 1024
-        embedding: TT["batch", "pos", "d_model"] = torch.zeros(1, positions, d_model)*100
-        layer = PositionalEncoding(d_model, positions)
-        encoding: TT["batch", "pos", "d_model"] = layer(embedding)
-        assert torch.isnan(encoding).any() == False
+        max_positions: int = 1024
+        embedding: Float[Tensor, "batch pos d_model"] = torch.zeros(
+            1, max_positions, d_model)*100
+        layer = PositionalEncoding(d_model, max_positions)
+        encoding: Float[Tensor, "batch pos d_model"] = layer(embedding)
+        assert not torch.isnan(encoding).any()
+
+    def test_unique_positional_encodings(self):
+        """Test that each token has a unique positional encoding vector."""
+        d_model: int = 4
+        max_positions: int = 10
+        embedding: Float[Tensor, "batch pos d_model"] = torch.zeros(
+            1, max_positions, d_model)
+        layer = PositionalEncoding(d_model, max_positions)
+        encoding: Float[Tensor, "batch pos d_model"] = layer(embedding)
+
+        unique_encodings = torch.unique(encoding, dim=1)
+        assert unique_encodings.shape[1] == max_positions
+
+    def test_linear_function_for_relative_positions(self):
+        """Test that the positional encoding of a token at position pos + k
+        can be calculated as a linear function of the positional encoding
+        of the token at position pos.
+        """
+        d_model: int = 4
+        max_positions: int = 10
+        k: int = 2
+        pos: int = 3
+        embedding: Float[Tensor, "batch pos d_model"] = torch.zeros(
+            1, max_positions, d_model)
+        layer = PositionalEncoding(d_model, max_positions)
+        encoding: Float[Tensor, "batch pos d_model"] = layer(embedding)
+
+        # Compute the linear function matrix M
+        B = k / (10000 ** (torch.arange(0, d_model, 2) / d_model))
+        M = torch.zeros(d_model, d_model)
+        M[0::2, 0::2] = torch.diag(torch.cos(B))
+        M[0::2, 1::2] = torch.diag(torch.sin(B))
+        M[1::2, 0::2] = torch.diag(-torch.sin(B))
+        M[1::2, 1::2] = torch.diag(torch.cos(B))
+
+        # Calculate the encoding for pos+k as a linear function of the encoding at pos
+        calculated_encoding = torch.matmul(
+            M, encoding[0, pos].unsqueeze(-1)).squeeze()
+
+        # Compare the calculated encoding to the actual encoding at pos+k
+        assert torch.allclose(encoding[0, pos + k], calculated_encoding)
