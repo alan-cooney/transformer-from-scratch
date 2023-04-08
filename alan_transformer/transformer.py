@@ -8,7 +8,7 @@ from alan_transformer.types import LogitsTT, ResidualStreamTT
 
 
 class Transformer(nn.Module):
-    """Transformer
+    """Transformer.
 
     Note that unlike the original paper, this uses an encoder-only architecture
     instead of encoder-decoder. This is because the original paper was focused
@@ -27,7 +27,7 @@ class Transformer(nn.Module):
         max_tokens: int = 1024,
         n_layers: int = 12,
     ) -> None:
-        """Initialise the transformer
+        """Initialise the transformer.
 
         Args:
             d_head: Attention head dimension
@@ -55,6 +55,7 @@ class Transformer(nn.Module):
             self.layers.append(Layer(d_model=d_model, d_head=d_head, d_hidden=d_hidden))
 
     def forward(self, tokens: Float[Tensor, "batch pos"]) -> LogitsTT:
+        """Forward."""
         # Embed + positional encoding
         x: ResidualStreamTT = self.embed(tokens)
         x = self.positional_encoding(x)

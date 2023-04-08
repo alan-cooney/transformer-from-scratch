@@ -6,9 +6,10 @@ from alan_transformer.types import ResidualStreamTT
 
 
 class Layer(nn.Module):
-    """Full layer (attention + MLP)
+    """Full layer (attention + MLP).
 
-    https://arxiv.org/pdf/1706.03762.pdf (p3)"""
+    https://arxiv.org/pdf/1706.03762.pdf (p3)
+    """
 
     def __init__(
         self,
@@ -17,6 +18,7 @@ class Layer(nn.Module):
         d_hidden: int = 2048,
         max_tokens: int = 1024,
     ):
+        """Initialise the full layer."""
         super().__init__()
 
         # Create the feed forward and attention sub-layers
@@ -26,13 +28,11 @@ class Layer(nn.Module):
         self.layer_norm_attn = nn.LayerNorm(d_model)
 
     def forward(self, residual_stream: ResidualStreamTT) -> ResidualStreamTT:
-        """Forward pass"""
+        """Forward pass."""
         # Attention
         attn = self.attention(residual_stream)
         attn_add_norm = residual_stream + self.layer_norm_ff(attn)
 
         # Feed forward
         ff = self.feed_forward(attn_add_norm)
-        ff_add_norm = attn_add_norm + self.layer_norm_attn(ff)
-
-        return ff_add_norm
+        return attn_add_norm + self.layer_norm_attn(ff)

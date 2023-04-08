@@ -42,12 +42,5 @@ RUN sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3
 # User the new user
 USER $USERNAME
 
-# Install formatters so they work on first initialisation
-RUN pip install \
-  black \
-  mypy \
-  pylance \
-  yapf
-
 # Install poetry
 RUN curl -sSL https://install.python-poetry.org | python3 -

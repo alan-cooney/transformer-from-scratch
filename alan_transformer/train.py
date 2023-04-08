@@ -17,18 +17,18 @@ def cross_entropy_loss(
     inputs: TokensTT,
     logits: LogitsTT,
 ) -> Float[Tensor, ()]:
-    """Loss function
+    """Loss function.
 
-        Loss is calculated from the difference between log probs of the
+    Loss is calculated from the difference between log probs of the
 
-        https://arxiv.org/pdf/1706.03762.pdf (p8)
+    https://arxiv.org/pdf/1706.03762.pdf (p8)
 
-        Params:
-            Input: Input tokens
-            logits: Logits from the forward pass
-    s
-        Returns:
-            Log loss
+    Params:
+        Input: Input tokens
+        logits: Logits from the forward pass
+
+    Returns:
+        Log loss
     """
     # Targets are inputs except for the first one (which we aren't predicting)
     # Logits except last exclude the last one (which we don't have a target for)

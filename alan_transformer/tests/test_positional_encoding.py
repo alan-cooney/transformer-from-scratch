@@ -9,7 +9,11 @@ from alan_transformer.positional_encoding import PositionalEncoding
 
 class TestPositionalEncoding:
     def test_positional_encoding_for_specific_token(self):
-        """Test the pos=2 token"""
+        """Test by calculating a specific token and comparing to the module.
+
+        Here we calculate the encoding for just a specific token and check it's the same as the
+        module positional encoding.
+        """
         # Set the embedding to zeros
         d_model: int = 4
         embedding: Float[Tensor, "batch pos d_model"] = torch.zeros(1, 4, d_model)
@@ -24,7 +28,7 @@ class TestPositionalEncoding:
                 pos_embed = math.cos(position / (10000 ** ((dim - 1) / d_model)))
             expected_positional_encoding.append(pos_embed)
 
-        # Compare against the res
+        # Compare against the module
         layer = PositionalEncoding(d_model, 1024)
         encoding: Float[Tensor, "batch pos d_model"] = layer(embedding)
         assert torch.allclose(
@@ -33,7 +37,10 @@ class TestPositionalEncoding:
         )
 
     def test_numerically_stable(self):
-        """Test that the encoding is numerically stable"""
+        """Test that the encoding is numerically stable.
+
+        This checks our Positional Encoding doesn't create any NaN values.
+        """
         d_model: int = 768
         max_positions: int = 1024
         embedding: Float[Tensor, "batch pos d_model"] = (
@@ -59,9 +66,10 @@ class TestPositionalEncoding:
         assert unique_encodings.shape[1] == max_positions
 
     def test_linear_function_for_relative_positions(self):
-        """Test that the positional encoding of a token at position pos + k
-        can be calculated as a linear function of the positional encoding
-        of the token at position pos.
+        """Test that relative positions can be obtained with just matrix multiplication.
+
+        Check that the positional encoding of a token at position pos + k can be calculated as a
+        linear function of the positional encoding of the token at position pos.
         """
         d_model: int = 4
         max_positions: int = 10

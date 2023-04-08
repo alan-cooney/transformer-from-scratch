@@ -6,8 +6,7 @@ from alan_transformer.types import ResidualStreamTT
 
 
 class PositionalEncoding(torch.nn.Module):
-    """
-    # Positional Encoding Module
+    """Positional Encoding Module.
 
     The purpose of positional encoding is to add information about the relative
     positions of tokens within a sequence since the self-attention mechanism
@@ -142,9 +141,7 @@ class PositionalEncoding(torch.nn.Module):
         d_model: int,
         max_tokens: int,
     ) -> None:
-        """
-        Initializes the PositionalEncoding module by creating a positional
-        encoding matrix.
+        """Initialize the positional encoding matrix.
 
         Args:
             d_model (int): The dimension of the input embeddings (model size).
@@ -158,7 +155,7 @@ class PositionalEncoding(torch.nn.Module):
         # Create everything inside the parentheses
         # inner = pos/(10000^(2i/d_model) = pos/wavelength
         positions: Float[Tensor, "pos 1"] = torch.arange(0, max_tokens).unsqueeze(1)
-        dimensions_2: Float[Tensor, "d_model_half"] = torch.arange(0, d_model, 2)
+        dimensions_2: Float[Tensor, " d_model_half"] = torch.arange(0, d_model, 2)
         inner: Float[Tensor, "pos d_model_half"] = positions / (
             10000 ** (dimensions_2 / d_model)
         )
@@ -171,8 +168,7 @@ class PositionalEncoding(torch.nn.Module):
         self.register_buffer("pos_encoding", pos_encoding)
 
     def forward(self, embedding: ResidualStreamTT) -> ResidualStreamTT:
-        """
-        Apply the positional encoding to the given input embedding.
+        """Apply the positional encoding to the given input embedding.
 
         Args:
             embedding (ResidualStreamTT): The input embedding with shape
