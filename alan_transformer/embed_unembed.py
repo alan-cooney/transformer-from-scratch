@@ -26,10 +26,12 @@ class Embed(nn.Module):
         self.d_model: int = d_model
 
         self.embed_weights: Float[Tensor, "vocab d_model"] = nn.Parameter(
-            torch.empty(d_vocab, d_model),
+            torch.rand(d_vocab, d_model),
         )
 
-        self.embed_bias: Float[Tensor, "d_model"] = nn.Parameter(torch.empty(d_model))
+        # Initialise the weights
+        initrange = 1.0 / math.sqrt(d_vocab)
+        self.embed_weights.data.uniform_(-initrange, initrange)
 
     def forward(self, tokens: TokensTT) -> ResidualStreamTT:
         """Forward Pass through the Embedding Layer.
@@ -41,11 +43,7 @@ class Embed(nn.Module):
             ResidualStreamTT: Continuous representations of the tokens
         """
         # Index into weights (with the tokens)
-        embed_pre_bias: ResidualStreamTT = self.embed_weights[tokens, :]
-
-        # Note the paper multiplies the embedding weights by sqrt(d_model),
-        # which is equivalent to doing this here
-        return embed_pre_bias * math.sqrt(self.d_model) + self.embed_bias
+        return self.embed_weights[tokens, :]
 
 
 class Unembed(nn.Module):
@@ -72,7 +70,7 @@ class Unembed(nn.Module):
             torch.empty(d_model, d_vocab),
         )
 
-        self.unembed_bias: Float[Tensor, " vocab"] = nn.Parameter(torch.empty(d_vocab))
+        nn.init.kaiming_uniform_(self.unembed_weights, a=math.sqrt(5))
 
     def forward(self, residual_stream: ResidualStreamTT) -> LogitsTT:
         """Forward Pass through the Unembedding Layer.
@@ -83,10 +81,8 @@ class Unembed(nn.Module):
         Returns:
             LogitsTT: Logits representing probabilities for the tokens
         """
-        unembed_pre_bias = einsum(
+        return einsum(
             "batch pos model, model vocab -> batch pos vocab",
             residual_stream,
             self.unembed_weights,
         )
-
-        return unembed_pre_bias + self.unembed_bias
