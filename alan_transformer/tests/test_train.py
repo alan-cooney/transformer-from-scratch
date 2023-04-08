@@ -16,8 +16,7 @@ class TestCrossEntropyLoss:
         # Note that with the logits we must set the correct values as very high,
         # as when softmax is applied (to get the probs) this will result in a
         # value on 1 for each correct token.
-        logits: LogitsTT = F.one_hot(
-            sample_tokens[:, 1:]).float() * 999999  # 2,3,4
+        logits: LogitsTT = F.one_hot(sample_tokens[:, 1:]).float() * 999999  # 2,3,4
 
         # Check the loss is 0
         loss = cross_entropy_loss(inputs, logits).item()

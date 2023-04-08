@@ -1,6 +1,6 @@
 import torch
-from torch import Tensor
 from jaxtyping import Float
+from torch import Tensor
 
 from alan_transformer.types import ResidualStreamTT
 
@@ -51,7 +51,7 @@ class PositionalEncoding(torch.nn.Module):
     One advantage of this approach is that it's scalable. This is best
     illustrated with the trivial alternative of linear encoding (i.e. PE(pos, i) =
     pos / max_tokens). This wouldn't scale as well to longer sequences because
-    the differences between positions would be smaller. 
+    the differences between positions would be smaller.
 
     ### It's Fixed (Doesn't Require Learning)
 
@@ -87,7 +87,7 @@ class PositionalEncoding(torch.nn.Module):
     v_pos = [PE(pos, 0), PE(pos, 1), PE(pos, 2), ..., PE(pos, d - 1)]^T
 
     v_pos_k = [PE(pos + k, 0), PE(pos + k, 1), PE(pos + k, 2), ..., PE(pos + k,
-    d - 1)]^T 
+    d - 1)]^T
 
     We can then show that v_pos_k is just a linear multiplication of M and
     v_pos:
@@ -116,7 +116,7 @@ class PositionalEncoding(torch.nn.Module):
     matches the one from the token at position pos, while producing different
     vectors for other positions. Consequently, the dot product q . k, which
     forms the attention matrix, would likely have the largest value for elements
-    at positions pos and pos + k. 
+    at positions pos and pos + k.
 
     This is because the dot product of a vector with itself tends to be larger
     than the dot product of two different random vectors of the same size.
@@ -132,7 +132,7 @@ class PositionalEncoding(torch.nn.Module):
     on linearly projected subsets of the embedding space (with dimensions
     d_head, which is smaller than d_model) rather than the entire space.
     However, the same idea applies, and multiple heads can collaborate to
-    achieve the desired behavior across the full embedding space. 
+    achieve the desired behavior across the full embedding space.
     """
 
     pos_encoding: Float[Tensor, "pos d_model"]
@@ -157,12 +157,11 @@ class PositionalEncoding(torch.nn.Module):
 
         # Create everything inside the parentheses
         # inner = pos/(10000^(2i/d_model) = pos/wavelength
-        positions: Float[Tensor, "pos 1"] = torch.arange(
-            0, max_tokens).unsqueeze(1)
-        dimensions_2: Float[Tensor, "d_model_half"] = torch.arange(
-            0, d_model, 2)
-        inner: Float[Tensor, "pos d_model_half"] = positions / \
-            (10000 ** (dimensions_2 / d_model))
+        positions: Float[Tensor, "pos 1"] = torch.arange(0, max_tokens).unsqueeze(1)
+        dimensions_2: Float[Tensor, "d_model_half"] = torch.arange(0, d_model, 2)
+        inner: Float[Tensor, "pos d_model_half"] = positions / (
+            10000 ** (dimensions_2 / d_model)
+        )
 
         # Create interweaved positional encoding
         pos_encoding = torch.zeros(max_tokens, d_model)
@@ -185,6 +184,8 @@ class PositionalEncoding(torch.nn.Module):
                               embedding (batch_size, tokens, d_model).
         """
         num_tokens_in_embedding: int = embedding.shape[-2]
-        trimmed_pos_encoding: Float[Tensor,
-                                    "pos d_model"] = self.pos_encoding[:num_tokens_in_embedding, :]
+        trimmed_pos_encoding: Float[Tensor, "pos d_model"] = self.pos_encoding[
+            :num_tokens_in_embedding,
+            :,
+        ]
         return trimmed_pos_encoding + embedding

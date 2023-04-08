@@ -1,10 +1,10 @@
-import torch
-from torch import nn, Tensor
 from jaxtyping import Float
+from torch import Tensor, nn
+
 from alan_transformer.embed_unembed import Embed, Unembed
 from alan_transformer.layer import Layer
 from alan_transformer.positional_encoding import PositionalEncoding
-from alan_transformer.types import TokensTT, ResidualStreamTT, LogitsTT
+from alan_transformer.types import LogitsTT, ResidualStreamTT
 
 
 class Transformer(nn.Module):
@@ -52,8 +52,7 @@ class Transformer(nn.Module):
         # Layers
         self.layers = nn.ModuleList([])
         for _layer_idx in range(n_layers):
-            self.layers.append(
-                Layer(d_model=d_model, d_head=d_head, d_hidden=d_hidden))
+            self.layers.append(Layer(d_model=d_model, d_head=d_head, d_hidden=d_hidden))
 
     def forward(self, tokens: Float[Tensor, "batch pos"]) -> LogitsTT:
         # Embed + positional encoding

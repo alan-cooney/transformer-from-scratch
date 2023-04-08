@@ -1,7 +1,7 @@
 import torch
 
-from alan_transformer.transformer import Transformer
 from alan_transformer.tests.utils.mock_parameter import MockParameterOnes
+from alan_transformer.transformer import Transformer
 
 
 class TestTransformer:

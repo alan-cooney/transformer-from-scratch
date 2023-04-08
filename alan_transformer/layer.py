@@ -10,7 +10,13 @@ class Layer(nn.Module):
 
     https://arxiv.org/pdf/1706.03762.pdf (p3)"""
 
-    def __init__(self, d_model: int = 768, d_head: int = 64, d_hidden: int = 2048, max_tokens: int = 1024):
+    def __init__(
+        self,
+        d_model: int = 768,
+        d_head: int = 64,
+        d_hidden: int = 2048,
+        max_tokens: int = 1024,
+    ):
         super().__init__()
 
         # Create the feed forward and attention sub-layers

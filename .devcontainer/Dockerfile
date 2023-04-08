@@ -9,12 +9,12 @@ ARG USER_GID=$USER_UID
 # Create the user
 # https://code.visualstudio.com/remote/advancedcontainers/add-nonroot-user
 RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
-    && usermod -a -G video user \ 
-    && apt-get update \
-    && apt-get install -y sudo \
-    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
-    && chmod 0440 /etc/sudoers.d/$USERNAME
+  && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
+  && usermod -a -G video user \
+  && apt-get update \
+  && apt-get install -y sudo \
+  && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+  && chmod 0440 /etc/sudoers.d/$USERNAME
 
 # Install dependencies
 RUN sudo apt-get update && \
@@ -42,16 +42,12 @@ RUN sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3
 # User the new user
 USER $USERNAME
 
-# Install python dev dependencies
+# Install formatters so they work on first initialisation
 RUN pip install \
-  autopep8 \
-  jedi \
+  black \
   mypy \
   pylance \
-  pytest \
-  toml \
-  yapf \
-  jupyterlab
-  
+  yapf
+
 # Install poetry
 RUN curl -sSL https://install.python-poetry.org | python3 -

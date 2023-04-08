@@ -1,0 +1,161 @@
+# Update all versions in this file by running:
+#   $ pre-commit autoupdate
+minimum_pre_commit_version: 3.2.2
+default_language_version:
+  python: python3.9
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: end-of-file-fixer
+        name: Check for a blank line at the end of scripts (auto-fixes)
+      - id: trailing-whitespace
+      - id: check-builtin-literals
+      - id: check-byte-order-marker
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-toml
+      - id: check-vcs-permalinks
+      - id: check-xml
+      - id: debug-statements
+      - id: detect-private-key
+      - id: mixed-line-ending
+      - id: fix-encoding-pragma
+        args: ["--remove"]
+      - id: check-yaml
+      - id: check-added-large-files
+        name: Check for files larger than 5 MB
+        args: ["--maxkb=5120"]
+      - id: check-ast
+      - id: check-docstring-first
+  - repo: https://github.com/myint/autoflake
+    rev: v2.0.2
+    hooks:
+      - id: autoflake
+        args: &autoflake
+          - --in-place
+          - --remove-all-unused-imports
+          - --expand-star-imports
+          - --remove-duplicate-keys
+          - --remove-unused-variables
+  - repo: https://github.com/pycqa/flake8
+    rev: 5.0.4
+    hooks:
+      - &flake8
+        id: flake8
+        additional_dependencies:
+          - flake8-bugbear==23.3.12
+          - flake8-comprehensions==3.11.1
+          - flake8-docstrings==1.7.0
+          - flake8-eradicate==1.4.0
+          - flake8-fixme==1.1.1
+          - flake8-implicit-str-concat==0.4.0
+          - flake8-mutable==1.2.0
+          - flake8-no-pep420==2.3.0
+          - flake8-print==5.0.0
+          - flake8-return==1.2.0
+          - flake8-simplify==0.19.3
+        args: ["--config=setup.cfg"]
+  - repo: https://github.com/psf/black
+    rev: 23.1.0
+    hooks:
+      - id: black
+  - repo: https://github.com/asottile/add-trailing-comma
+    rev: v2.4.0
+    hooks:
+      - id: add-trailing-comma
+        args: [--py36-plus]
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        name: isort (python)
+        types: [python]
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.3.1
+    hooks:
+      - id: pyupgrade
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        name: detect-secrets - Detect secrets in staged code
+        args: [
+            "--baseline",
+            ".secrets.baseline",
+            # https://regex101.com/
+            "--exclude-files 'poetry\\.lock'",
+            "--exclude-files '\\.secrets\\.baseline'",
+            "--exclude-files '\\.env\\.template'",
+            # "--exclude-files '.*\\.ipynb$'",
+            # "--exclude-files '.*build/'",
+            "--exclude-secrets 'password|ENTER_PASSWORD_HERE|INSERT_API_KEY_HERE'",
+            "--exclude-lines 'integrity=*sha'",
+          ]
+        # https://pre-commit.com/#regular-expressions
+        exclude: |
+          (?x)^(
+              poetry\.lock|
+              \.secrets\.baseline|
+              \.env\.template
+          )$
+  # - repo: https://github.com/python-poetry/poetry
+  #   rev: 1.4.0
+  #   hooks:
+  #     - id: poetry-check
+  #     - id: poetry-lock
+  #       args: ["--no-update"]
+  #     - id: poetry-export
+  #       args:
+  #         [
+  #           "-f",
+  #           "requirements.txt",
+  #           "-o",
+  #           "requirements.txt",
+  #           "--without-hashes",
+  #         ]
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.0.0-alpha.0
+    hooks:
+      - id: prettier
+        types_or: [yaml]
+        additional_dependencies:
+          - "prettier@2.8.4"
+  - repo: local
+    hooks:
+      - id: pylint
+        name: pylint
+        entry: pylint .
+        # entry: bash -c 'pylint ./path/package1/; pylint ./path/package2/'
+        language: system
+        types: [python]
+        always_run: true
+        pass_filenames: false
+        stages: [manual]
+      - id: pip-audit
+        name: pip-audit
+        entry: pip-audit
+        # Exclusions example
+        # entry: pip-audit --ignore-vuln PYSEC-2022-42974 --ignore-vuln GHSA-w596-4wvx-j9j6
+        language: system
+        always_run: true
+        pass_filenames: false
+        stages: [manual]
+      # TODO: Remove once this is resolved
+      # https://github.com/python-poetry/poetry/issues/2765
+      # https://github.com/python-poetry/poetry/issues/7075
+      - id: poetry-lock
+        name: poetry-lock
+        # entry: bash -c 'poetry lock && python add_markers.py'
+        entry: bash -c 'poetry lock --no-update'
+        language: system
+        always_run: true
+        pass_filenames: false
+      - id: poetry-export
+        name: poetry-export
+        entry: poetry export -f requirements.txt --output requirements.txt --without-hashes
+        language: system
+        always_run: true
+        pass_filenames: false

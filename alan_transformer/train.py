@@ -3,12 +3,12 @@ from typing import Optional
 
 import torch
 import torch.nn.functional as F
-from torch import optim, Tensor
-from torch.utils.data import DataLoader
-from jaxtyping import Float
-from tqdm import tqdm, trange
-
 import wandb
+from jaxtyping import Float
+from torch import Tensor, optim
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+
 from alan_transformer.transformer import Transformer
 from alan_transformer.types import LogitsTT, TokensTT
 
@@ -19,25 +19,30 @@ def cross_entropy_loss(
 ) -> Float[Tensor, ()]:
     """Loss function
 
-    Loss is calculated from the difference between log probs of the 
+        Loss is calculated from the difference between log probs of the
 
-    https://arxiv.org/pdf/1706.03762.pdf (p8)
+        https://arxiv.org/pdf/1706.03762.pdf (p8)
 
-    Params:
-        Input: Input tokens
-        logits: Logits from the forward pass
-s
-    Returns:
-        Log loss
+        Params:
+            Input: Input tokens
+            logits: Logits from the forward pass
+    s
+        Returns:
+            Log loss
     """
     # Targets are inputs except for the first one (which we aren't predicting)
     # Logits except last exclude the last one (which we don't have a target for)
     target: Float[Tensor, "batch pos_minus_1"] = inputs[:, 1:]
-    logits_except_last: Float[Tensor, "batch pos_minus_1 d_vocab"] = \
-        logits[:, :-1, :].float()
+    logits_except_last: Float[Tensor, "batch pos_minus_1 d_vocab"] = logits[
+        :,
+        :-1,
+        :,
+    ].float()
 
-    log_probs: Float[Tensor, "batch pos_minus_1 d_vocab"] = \
-        F.log_softmax(logits_except_last, dim=-1)
+    log_probs: Float[Tensor, "batch pos_minus_1 d_vocab"] = F.log_softmax(
+        logits_except_last,
+        dim=-1,
+    )
 
     # Predicted log probs are the log probs of the correct tokens
     index: Float[Tensor, "batch pos_mins_1", 1] = target.unsqueeze(-1)
@@ -75,20 +80,20 @@ def train_loop(
     # Note that the paper also uses a warmup period of 4000 steps (which has not
     # been done here)
     # , betas=(0.9, 0.98), eps=1e-9)
-    optimizer = optim.Adam(
-        model.parameters(),
-        lr=1e-3)
+    optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
     # Create the checkpoint directory
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
     # Loop over epochs
     for epoch in tqdm(range(epochs), desc="Epochs"):
-
         # Loop over batches
-        with tqdm(enumerate(dataloader), desc="Batches", total=len(dataloader)) as tracked_batches:
+        with tqdm(
+            enumerate(dataloader),
+            desc="Batches",
+            total=len(dataloader),
+        ) as tracked_batches:
             for batch_index, batch in tracked_batches:
-
                 # Check not over max_batches
                 if max_batches and batch_index >= max_batches:
                     break
@@ -112,11 +117,9 @@ def train_loop(
 
                 # Log
                 if batch_index % 10 == 0 and wandb.run is not None:
-                    wandb.log({
-                        "epoch": epoch,
-                        "batch": batch_index,
-                        "loss": loss.item()
-                    })
+                    wandb.log(
+                        {"epoch": epoch, "batch": batch_index, "loss": loss.item()},
+                    )
 
                 # Save model parameters
                 # if (batch_index + 1) % save_frequency_batches == 0:

@@ -14,8 +14,11 @@
         "vscode": {
             // Set *default* container specific settings.json values on container create.
             "settings": {
-                "python.formatting.autopep8Path": "autopep8",
-                "python.linting.mypyPath": "mypy"
+                "python.formatting.blackPath": "black",
+                "python.linting.mypyPath": "mypy",
+                "python.formatting.provider": "black",
+                "python.formatting.yapfPath": "yapf",
+                "python.linting.flake8Path": "flake8"
             },
             // Add the IDs of extensions you want installed when the container is created.
             "extensions": [
@@ -38,7 +41,9 @@
                 "stkb.rewrap",
                 "streetsidesoftware.code-spell-checker",
                 "tushortz.python-extended-snippets",
-                "yzhang.markdown-all-in-one"
+                "yzhang.markdown-all-in-one",
+                "elagil.pre-commit-helper",
+                "ms-python.flake8"
             ]
         }
     },

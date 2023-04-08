@@ -2,27 +2,26 @@ import urllib
 from pathlib import Path
 from typing import Dict, List
 
-import torch
+import wandb
 from datasets import load_dataset, load_from_disk
 from datasets.dataset_dict import DatasetDict
-from torch.utils.data import DataLoader, dataset
-from torch import Tensor
 from jaxtyping import Float
+from torch import Tensor
+from torch.utils.data import DataLoader
 from transformers import GPTNeoXTokenizerFast
 
-import wandb
 from alan_transformer.train import train_loop
 from alan_transformer.transformer import Transformer
 
 
 def create_tokenizer() -> GPTNeoXTokenizerFast:
-    return GPTNeoXTokenizerFast.from_pretrained(
-        "gpt2",
-        pad_token="<|endoftext|>"
-    )
+    return GPTNeoXTokenizerFast.from_pretrained("gpt2", pad_token="<|endoftext|>")
 
 
-def tokenize_prompt(text: List[str], tokenizer: GPTNeoXTokenizerFast) -> Dict[str, Float[Tensor, "mapping_batch_item pos"]]:
+def tokenize_prompt(
+    text: List[str],
+    tokenizer: GPTNeoXTokenizerFast,
+) -> Dict[str, Float[Tensor, "mapping_batch_item pos"]]:
     """Tokenize a prompt
 
     Designed to be used by a dataset mapping function, so it returns a dict with
@@ -40,7 +39,7 @@ def tokenize_prompt(text: List[str], tokenizer: GPTNeoXTokenizerFast) -> Dict[st
         max_length=1024,  # 1024 is the default max length for our transformer,
         is_split_into_words=False,
         return_attention_mask=False,
-        return_tensors="pt"  # Return a pytorch tensor per prompt
+        return_tensors="pt",  # Return a pytorch tensor per prompt
     )
 
     # Set return type as dict
@@ -49,7 +48,7 @@ def tokenize_prompt(text: List[str], tokenizer: GPTNeoXTokenizerFast) -> Dict[st
 
 def create_dataset(
     data_dir: Path = Path(__file__).parent / ".data",
-    load_if_exists: bool = True
+    load_if_exists: bool = True,
 ) -> DatasetDict:
     """Create the Shakespeare Dataset (one prompt per line)
 
@@ -75,9 +74,9 @@ def create_dataset(
     tokenizer = create_tokenizer()
     dataset = dataset.map(
         lambda examples: tokenize_prompt(examples["text"], tokenizer),
-        batched=True
+        batched=True,
     )
-    dataset.set_format(type='torch', columns=['input_ids'])
+    dataset.set_format(type="torch", columns=["input_ids"])
 
     # Save the dataset
     dataset.save_to_disk(dataset_path)
@@ -91,11 +90,7 @@ def create_dataloader(dataset: DatasetDict, batch_size: int) -> DataLoader:
         dataset: Dataset
         batch_size: Batch size
     """
-    return DataLoader(
-        dataset["train"],
-        batch_size=batch_size,
-        shuffle=True
-    )
+    return DataLoader(dataset["train"], batch_size=batch_size, shuffle=True)
 
 
 def train_shakespeare(batch_size: int = 4) -> None:
