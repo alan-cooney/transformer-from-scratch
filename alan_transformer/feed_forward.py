@@ -16,7 +16,13 @@ class FeedForward(nn.Module):
     https://arxiv.org/pdf/1706.03762.pdf (p5)
     """
 
-    def __init__(self, d_model: int = 768, d_hidden: int = 2048) -> None:
+    def __init__(self, d_model: int, d_hidden: int) -> None:
+        """Feed Forward Sub-Layer Initialisation
+
+        Args:
+            d_model (int): Dimensionality of the residual stream
+            d_hidden (int): Dimensionality of the hidden layer
+        """
         super().__init__()
 
         self.weight_inner: Float[Tensor, "d_model d_hidden"] = nn.Parameter(
@@ -31,8 +37,23 @@ class FeedForward(nn.Module):
 
         self.bias_outer: Float[Tensor, "d_model"] = nn.Parameter(torch.empty(d_model))
 
+        # Initialise the weights
+        # We use Kaiming Initialization for the inner weights, as we have a non-symmetric activation
+        # function (ReLU)
+        nn.init.kaiming_normal_(self.weight_inner)
+
+        # We use Xavier Initialization for the outer weights, as we have no activation function
+        nn.init.xavier_normal_(self.weight_outer)
+
     def forward(self, residual_stream: ResidualStreamTT) -> ResidualStreamTT:
-        """Forward pass"""
+        """Forward Pass through the Feed Forward Sub-Layer.
+
+        Args:
+            residual_stream (ResidualStreamTT): Feed Forward input
+
+        Returns:
+            ResidualStreamTT: Feed Forward output
+        """
         # Inner = relu(x W1 + b1)
         inner_pre_bias: HiddenTT = einsum(
             "batch pos d_model, d_model d_hidden -> batch pos d_hidden",

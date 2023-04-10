@@ -27,8 +27,8 @@ class Embed(nn.Module):
         """Initialize the Embed layer.
 
         Args:
-            d_vocab: The size of the input vocabulary
-            d_model: The model/residual stream dimension size
+            d_vocab (int): Number of tokens in the vocabulary
+            d_model (int): Dimensionality of the residual stream
         """
         super().__init__()
 
@@ -70,8 +70,8 @@ class Unembed(nn.Module):
         """Initialize the Unembed Layer.
 
         Args:
-            d_vocab: The size of the input vocabulary
-            d_model: The model/residual stream dimension size
+            d_vocab (int): Number of tokens in the vocabulary
+            d_model (int): Dimensionality of the residual stream
         """
         super().__init__()
 

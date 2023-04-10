@@ -129,10 +129,8 @@ class PositionalEncoding(torch.nn.Module):
         """Initialize the positional encoding matrix.
 
         Args:
-            d_model (int): The dimension of the input embeddings (model size). This is the size of
-                the residual stream.
-            max_tokens (int): The maximum number of tokens to be considered for positional encoding.
-                This represents the maximum length of the input sequence.
+            d_model (int): Dimensionality of the residual stream
+            max_tokens (int): Maximum sequence length (number of input tokens)
         """
         super().__init__()
 

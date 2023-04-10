@@ -1,7 +1,7 @@
 from torch import nn
 
 from alan_transformer.attention import MultiHeadAttention
-from alan_transformer.mlp import FeedForward
+from alan_transformer.feed_forward import FeedForward
 from alan_transformer.types import ResidualStreamTT
 
 

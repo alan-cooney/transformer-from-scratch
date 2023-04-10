@@ -1,6 +1,6 @@
 import torch
 
-from alan_transformer.mlp import FeedForward
+from alan_transformer.feed_forward import FeedForward
 from alan_transformer.tests.utils.mock_parameter import MockParameterOnes
 
 
