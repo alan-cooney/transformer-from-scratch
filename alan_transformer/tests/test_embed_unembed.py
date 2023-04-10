@@ -120,7 +120,7 @@ class TestBigrams:
         with torch.no_grad():
             for inputs, targets in test_loader:
                 outputs: LogitsTT = model(inputs)
-                _, predicted = torch.max(outputs.data, 2)
+                _, predicted = torch.max(outputs, 2)
                 _, target_indices = torch.max(targets, 2)
                 total += targets.size(0) * targets.size(1)
                 correct += (predicted == target_indices).sum().item()

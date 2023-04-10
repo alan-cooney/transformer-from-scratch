@@ -29,13 +29,13 @@ class FeedForward(nn.Module):
             torch.empty(d_model, d_hidden),
         )
 
-        self.bias_inner: Float[Tensor, "d_hidden"] = nn.Parameter(torch.empty(d_hidden))
+        self.bias_inner: Float[Tensor, "d_hidden"] = nn.Parameter(torch.zeros(d_hidden))
 
         self.weight_outer: Float[Tensor, "d_hidden d_model"] = nn.Parameter(
             torch.empty(d_hidden, d_model),
         )
 
-        self.bias_outer: Float[Tensor, "d_model"] = nn.Parameter(torch.empty(d_model))
+        self.bias_outer: Float[Tensor, "d_model"] = nn.Parameter(torch.zeros(d_model))
 
         # Initialise the weights
         # We use Kaiming Initialization for the inner weights, as we have a non-symmetric activation
