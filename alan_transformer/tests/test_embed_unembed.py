@@ -1,6 +1,7 @@
 import random
 from typing import Tuple
-
+from jaxtyping import Float, Int
+from torch import Tensor
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -18,6 +19,9 @@ class UnorderedIntegersDataset(Dataset):
     numbers after this (e.g. {4,2,3,5,1}).
     """
 
+    samples: list[Int[Tensor, " pos"]] = []
+    targets: list[Float[Tensor, "pos d_vocab"]] = []
+
     def __init__(self, num_samples: int, d_vocab: int):
         """Initialise the dataset.
 
@@ -26,20 +30,25 @@ class UnorderedIntegersDataset(Dataset):
             d_vocab (int): Vocab size (e.g. if 3 then it'll generate randomly ordered sets of
             {0,1,2}).
         """
-        self.samples = []
-        self.targets = []
         for _ in range(num_samples):
             sample = list(range(0, d_vocab - 1))
             random.shuffle(sample)
-            target = [i + 1 for i in sample]
-            self.samples.append(sample)
-            self.targets.append(target)
+            sample_tensor = torch.tensor(sample, dtype=torch.long)
+            self.samples.append(sample_tensor)
+
+            target_indices = sample_tensor + 1
+            target_one_hot = torch.nn.functional.one_hot(
+                target_indices, num_classes=d_vocab
+            )
+            self.targets.append(target_one_hot.float())
 
     def __len__(self):
         return len(self.samples)
 
-    def __getitem__(self, idx: int) -> Tuple[TokensTT, TokensTT]:
-        return torch.tensor(self.samples[idx]), torch.tensor(self.targets[idx])
+    def __getitem__(
+        self, idx: int
+    ) -> Tuple[Float[Tensor, " pos"], Float[Tensor, "pos d_vocab"]]:
+        return self.samples[idx], self.targets[idx]
 
 
 class ZeroLayerModel(nn.Module):
@@ -80,6 +89,7 @@ class TestBigrams:
         epochs = 10
         d_vocab = 100
         d_model = d_vocab
+
         model = ZeroLayerModel(d_vocab, d_model)
 
         dataset = UnorderedIntegersDataset(samples, d_vocab)
@@ -99,7 +109,7 @@ class TestBigrams:
             for i, (inputs, targets) in enumerate(train_loader):
                 optimizer.zero_grad()
                 outputs = model(inputs)
-                loss = criterion(outputs.view(-1, d_vocab), targets.view(-1))
+                loss = criterion(outputs, targets)
                 loss.backward()
                 optimizer.step()
 
@@ -111,8 +121,9 @@ class TestBigrams:
             for inputs, targets in test_loader:
                 outputs: LogitsTT = model(inputs)
                 _, predicted = torch.max(outputs.data, 2)
+                _, target_indices = torch.max(targets, 2)
                 total += targets.size(0) * targets.size(1)
-                correct += (predicted == targets).sum().item()
+                correct += (predicted == target_indices).sum().item()
 
         accuracy = correct / total
         assert accuracy > 0.9, f"Expected accuracy > 0.9, but got {accuracy}"
