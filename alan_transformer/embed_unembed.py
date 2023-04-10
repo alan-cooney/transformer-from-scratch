@@ -1,15 +1,24 @@
-import math
-
 import torch
 from fancy_einsum import einsum
 from jaxtyping import Float
 from torch import Tensor, nn
+import math
 
 from alan_transformer.types import LogitsTT, ResidualStreamTT, TokensTT
 
 
 class Embed(nn.Module):
     """Embedding Layer.
+
+    Note that in the paper the weights for the unembed are shared with the weights for the
+    embed. However, it turns out that the embed and unembed weights are an efficient place for
+    the model to do bigram statistics (probability of a next token given just the current token,
+    e.g. to learn that "run" may be most commonly followed by "fast"). This was found in A
+    Mathematical Framework for Transformer Circuits
+    (https://transformer-circuits.pub/2021/framework/index.html). We therefore use separate
+    embed and unembed weights in the two classes.
+
+
 
     Reference: https://arxiv.org/pdf/1706.03762.pdf (p5)
     """
@@ -26,15 +35,20 @@ class Embed(nn.Module):
         self.d_model: int = d_model
 
         self.embed_weights: Float[Tensor, "vocab d_model"] = nn.Parameter(
-            torch.rand(d_vocab, d_model),
+            torch.empty(d_vocab, d_model),
         )
 
         # Initialise the weights
-        initrange = 1.0 / math.sqrt(d_vocab)
-        self.embed_weights.data.uniform_(-initrange, initrange)
+        # We use Xavier initialisation here as an appropriate choice where there is either a
+        # symmetrical activation function (e.g. tanh) or no activation function (as here).
+        nn.init.xavier_uniform_(self.embed_weights)
 
     def forward(self, tokens: TokensTT) -> ResidualStreamTT:
         """Forward Pass through the Embedding Layer.
+
+        The original paper multiples the embedding by sqrt(d_model) during the forward pass,
+        presumably as a fix for having the same weights in the embedding and unembedding layers.
+        However, as we're not following that approach we have omitted this implementation detail.
 
         Args:
             tokens (TokensTT): Input tokens (indices rather than one-hot)
@@ -50,11 +64,6 @@ class Unembed(nn.Module):
     """Unembedding layer.
 
     Reference: https://arxiv.org/pdf/1706.03762.pdf (p5)
-
-    Note that in the paper the weights for the unembed are shared with the
-    weights for the embed. However, this is not very principled as these learned
-    weights can do bigrams if they are different, so instead the unembed layer
-    uses separate weights here.
     """
 
     def __init__(self, d_vocab: int, d_model: int) -> None:
@@ -70,7 +79,7 @@ class Unembed(nn.Module):
             torch.empty(d_model, d_vocab),
         )
 
-        nn.init.kaiming_uniform_(self.unembed_weights, a=math.sqrt(5))
+        nn.init.xavier_uniform_(self.unembed_weights)
 
     def forward(self, residual_stream: ResidualStreamTT) -> LogitsTT:
         """Forward Pass through the Unembedding Layer.
