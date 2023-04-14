@@ -128,7 +128,7 @@ def test_feed_forward_learns_on_dataset(dataset_class: Type[RegressionTaskDatase
     model = FeedForward(d_model, d_hidden)
 
     # Dataset
-    dataset = IdentityDataset(samples, d_vocab, d_model)
+    dataset = dataset_class(samples, d_vocab, d_model)
     train_size = int(len(dataset) * 0.8)
     test_size = len(dataset) - train_size
     train_data, test_data = random_split(dataset, [train_size, test_size])
