@@ -17,9 +17,9 @@ def cross_entropy_loss(
     inputs: TokensTT,
     logits: LogitsTT,
 ) -> Float[Tensor, ()]:
-    """Loss function.
+    """Language Model Cross Entropy Loss
 
-    Loss is calculated from the difference between log probs of the
+    Loss is calculated as the average negative log probs of the correct tokens.
 
     https://arxiv.org/pdf/1706.03762.pdf (p8)
 

@@ -18,7 +18,7 @@ ResidualStreamTT = Float[Tensor, "batch pos d_model"]
 class MultiHeadAttention(nn.Module):
     """Multi-Head Attention Sub-Layer."""
 
-    minus_infinity_triangle: Tensor
+    minus_infinity_triangle: Float[Tensor, "max_tokens max_tokens"]
 
     def __init__(
         self,
@@ -30,7 +30,7 @@ class MultiHeadAttention(nn.Module):
         super().__init__()
 
         # Check the params
-        if d_model % d_head == 0:
+        if d_model % d_head != 0:
             raise Exception("d_model must be a multiple of d_head")
 
         # Set number of heads
