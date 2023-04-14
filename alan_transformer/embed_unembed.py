@@ -10,15 +10,13 @@ from alan_transformer.types import LogitsTT, ResidualStreamTT, TokensTT
 class Embed(nn.Module):
     """Embedding Layer.
 
-    Note that in the paper the weights for the unembed are shared with the weights for the
+    Note that in the original paper the weights for the unembed are shared with the weights for the
     embed. However, it turns out that the embed and unembed weights are an efficient place for
     the model to do bigram statistics (probability of a next token given just the current token,
-    e.g. to learn that "run" may be most commonly followed by "fast"). This was found in A
-    Mathematical Framework for Transformer Circuits
+    e.g. to learn that "Obama" commonly follows "Barack"). This was found in A Mathematical
+    Framework for Transformer Circuits
     (https://transformer-circuits.pub/2021/framework/index.html). We therefore use separate
-    embed and unembed weights in the two classes.
-
-
+    embed and unembed weights.
 
     Reference: https://arxiv.org/pdf/1706.03762.pdf (p5)
     """
@@ -88,7 +86,7 @@ class Unembed(nn.Module):
             residual_stream (ResidualStreamTT): Residual stream
 
         Returns:
-            LogitsTT: Logits representing probabilities for the tokens
+            LogitsTT: Logits representing log probabilities for the tokens
         """
         return einsum(
             "batch pos model, model vocab -> batch pos vocab",
