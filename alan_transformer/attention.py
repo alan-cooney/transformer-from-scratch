@@ -18,6 +18,8 @@ ResidualStreamTT = Float[Tensor, "batch pos d_model"]
 class MultiHeadAttention(nn.Module):
     """Multi-Head Attention Sub-Layer."""
 
+    minus_infinity_triangle: Tensor
+
     def __init__(
         self,
         d_head: int = 64,
@@ -50,6 +52,14 @@ class MultiHeadAttention(nn.Module):
         self.weight_out: Float[Tensor, "d_model d_model"] = nn.Parameter(
             torch.empty(d_model, d_model),
         )
+
+        # Initialise the weights
+        # Use Kaiming for the QKV weights as we have non-linear functions after them. Use Xavier for
+        # the output weights as we have no activation function after it.
+        nn.init.kaiming_normal_(self.weight_query)
+        nn.init.kaiming_normal_(self.weight_key)
+        nn.init.kaiming_normal_(self.weight_value)
+        nn.init.xavier_normal_(self.weight_out)
 
         # Create the minus infinity mask
         minus_infinity = torch.full((max_tokens, max_tokens), float("-inf"))
