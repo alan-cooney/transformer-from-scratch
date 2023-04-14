@@ -1,8 +1,8 @@
 """Shared types"""
-from jaxtyping import Float
+from jaxtyping import Float, Int
 from torch import Tensor
 
-TokensTT = Float[Tensor, "batch pos"]
+TokensTT = Int[Tensor, "batch pos"]
 
 ResidualStreamTT = Float[Tensor, "batch pos d_model"]
 

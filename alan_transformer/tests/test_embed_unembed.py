@@ -33,11 +33,11 @@ class UnorderedIntegersDataset(Dataset):
         for _ in range(num_samples):
             sample = list(range(0, d_vocab - 1))
             random.shuffle(sample)
-            sample_tensor = torch.tensor(sample, dtype=torch.long)
+            sample_tensor: Int[Tensor, " pos"] = torch.tensor(sample, dtype=torch.long)
             self.samples.append(sample_tensor)
 
             target_indices = sample_tensor + 1
-            target_one_hot = torch.nn.functional.one_hot(
+            target_one_hot: Float[Tensor, "pos d_vocab"] = torch.nn.functional.one_hot(
                 target_indices, num_classes=d_vocab
             )
             self.targets.append(target_one_hot.float())
@@ -47,7 +47,7 @@ class UnorderedIntegersDataset(Dataset):
 
     def __getitem__(
         self, idx: int
-    ) -> Tuple[Float[Tensor, " pos"], Float[Tensor, "pos d_vocab"]]:
+    ) -> Tuple[Int[Tensor, " pos"], Float[Tensor, "pos d_vocab"]]:
         return self.samples[idx], self.targets[idx]
 
 
@@ -67,7 +67,7 @@ class ZeroLayerModel(nn.Module):
         return self.unembed(residual_stream)
 
 
-class TestBigrams:
+def test_learn_order_integers() -> None:
     """Test that a model with just the embedding and unembedding can learn bigram statistics.
 
     Bigram statistics are the frequencies with which one token comes after another. In this case,
@@ -78,52 +78,51 @@ class TestBigrams:
 
     Reference: https://transformer-circuits.pub/2021/framework/index.html
     """
+    # Set random seeds
+    seed = 42
+    random.seed(seed)
+    torch.manual_seed(seed)
 
-    def test_learn_order_integers(self):
-        # Set random seeds
-        seed = 42
-        random.seed(seed)
-        torch.manual_seed(seed)
+    samples = 1000
+    epochs = 10
+    d_vocab = 100
+    d_model = d_vocab
 
-        samples = 1000
-        epochs = 10
-        d_vocab = 100
-        d_model = d_vocab
+    model = ZeroLayerModel(d_vocab, d_model)
 
-        model = ZeroLayerModel(d_vocab, d_model)
+    dataset = UnorderedIntegersDataset(samples, d_vocab)
+    train_size = int(len(dataset) * 0.8)
+    test_size = len(dataset) - train_size
+    train_data, test_data = random_split(dataset, [train_size, test_size])
 
-        dataset = UnorderedIntegersDataset(samples, d_vocab)
-        train_size = int(len(dataset) * 0.8)
-        test_size = len(dataset) - train_size
-        train_data, test_data = random_split(dataset, [train_size, test_size])
+    train_loader = DataLoader(train_data, batch_size=32, shuffle=True)
+    test_loader = DataLoader(test_data, batch_size=32)
 
-        train_loader = DataLoader(train_data, batch_size=32, shuffle=True)
-        test_loader = DataLoader(test_data, batch_size=32)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters())
 
-        criterion = nn.CrossEntropyLoss()
-        optimizer = optim.Adam(model.parameters())
+    # Train the model
+    for _epoch in range(epochs):
+        model.train()
 
-        # Train the model
-        for _epoch in range(epochs):
-            model.train()
-            for i, (inputs, targets) in enumerate(train_loader):
-                optimizer.zero_grad()
-                outputs = model(inputs)
-                loss = criterion(outputs, targets)
-                loss.backward()
-                optimizer.step()
+        for i, (inputs, targets) in enumerate(train_loader):
+            optimizer.zero_grad()
+            outputs = model(inputs)
+            loss = criterion(outputs, targets)
+            loss.backward()
+            optimizer.step()
 
-        # Test the model
-        model.eval()
-        correct = 0
-        total = 0
-        with torch.no_grad():
-            for inputs, targets in test_loader:
-                outputs: LogitsTT = model(inputs)
-                _, predicted = torch.max(outputs, 2)
-                _, target_indices = torch.max(targets, 2)
-                total += targets.size(0) * targets.size(1)
-                correct += (predicted == target_indices).sum().item()
+    # Test the model
+    model.eval()
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for inputs, targets in test_loader:
+            outputs: LogitsTT = model(inputs)
+            _, predicted = torch.max(outputs, 2)
+            _, target_indices = torch.max(targets, 2)
+            total += targets.size(0) * targets.size(1)
+            correct += (predicted == target_indices).sum().item()
 
-        accuracy = correct / total
-        assert accuracy > 0.9, f"Expected accuracy > 0.9, but got {accuracy}"
+    accuracy = correct / total
+    assert accuracy > 0.9, f"Expected accuracy > 0.9, but got {accuracy}"

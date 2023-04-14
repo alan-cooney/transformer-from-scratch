@@ -81,3 +81,5 @@ extend-exclude = '''
 )
 '''
 
+[tool.pytest.ini_options]
+addopts = "--jaxtyping-packages=alan_transformer,typeguard.typechecked -s"

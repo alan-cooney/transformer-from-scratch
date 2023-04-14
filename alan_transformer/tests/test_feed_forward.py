@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Type
 import random
 import torch
 import torch.nn as nn
@@ -105,7 +105,7 @@ class OddEvenDataset(RegressionTaskDataset):
     "dataset_class",
     [IdentityDataset, BitReversalDataset, BinaryAdditionDataset, OddEvenDataset],
 )
-def test_feed_forward_learns_on_dataset(dataset_class: RegressionTaskDataset):
+def test_feed_forward_learns_on_dataset(dataset_class: Type[RegressionTaskDataset]):
     """Test the feed forward network learns to solve the regression tasks.
 
     Args:
