@@ -66,3 +66,6 @@ generated-members = "torch.*"
 [tool.pylint.DESIGN]
 max-args = 10 # Maximum number of arguments for function
 min-public-methods = 1 # Minimum number of public methods for a class
+
+[tool.pylint."MESSAGES CONTROL"]
+disable = "redefined-builtin" # Disable redefined builtin functions
