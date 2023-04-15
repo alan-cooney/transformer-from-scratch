@@ -2,7 +2,7 @@ from torch import nn
 
 from alan_transformer.attention import MultiHeadAttention
 from alan_transformer.feed_forward import FeedForward
-from alan_transformer.types import ResidualStreamTT
+from alan_transformer.types import BatchResidualStreamTT
 
 
 class Layer(nn.Module):
@@ -27,7 +27,7 @@ class Layer(nn.Module):
         self.attention = MultiHeadAttention(d_head, d_model, max_tokens)
         self.layer_norm_attn = nn.LayerNorm(d_model)
 
-    def forward(self, residual_stream: ResidualStreamTT) -> ResidualStreamTT:
+    def forward(self, residual_stream: BatchResidualStreamTT) -> BatchResidualStreamTT:
         """Forward pass."""
         # Attention
         attn = self.attention(residual_stream)

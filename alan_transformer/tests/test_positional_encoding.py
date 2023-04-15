@@ -5,6 +5,7 @@ from jaxtyping import Float
 from torch import Tensor
 
 from alan_transformer.positional_encoding import PositionalEncoding
+from alan_transformer.types import BatchResidualStreamTT, ResidualStreamTT
 
 
 class TestPositionalEncoding:
@@ -12,14 +13,14 @@ class TestPositionalEncoding:
         """Test that each token will have a unique positional encoding vector."""
         d_model: int = 1024  # Larger model from the original paper
         sequence_length: int = 512
-        embedding: Float[Tensor, "batch pos d_model"] = torch.zeros(
+        embedding: BatchResidualStreamTT = torch.zeros(
             1,
             sequence_length,
             d_model,
         )
         layer = PositionalEncoding(d_model, sequence_length)
-        encoding: Float[Tensor, "batch pos d_model"] = layer(embedding)
-        single_batch_encoding: Float[Tensor, "pos d_model"] = encoding[0]
+        encoding: BatchResidualStreamTT = layer(embedding)
+        single_batch_encoding: ResidualStreamTT = encoding[0]
 
         # Check that each position vector is unique
         for pos in range(sequence_length):
@@ -39,13 +40,13 @@ class TestPositionalEncoding:
         max_positions: int = 10
         k: int = 2
         pos: int = 3
-        embedding: Float[Tensor, "batch pos d_model"] = torch.zeros(
+        embedding: BatchResidualStreamTT = torch.zeros(
             1,
             max_positions,
             d_model,
         )
         layer = PositionalEncoding(d_model, max_positions)
-        encoding: Float[Tensor, "batch pos d_model"] = layer(embedding)
+        encoding: BatchResidualStreamTT = layer(embedding)
 
         # Compute the linear function matrix M
         B = k / (10000 ** (torch.arange(0, d_model, 2) / d_model))
@@ -70,7 +71,7 @@ class TestPositionalEncoding:
         """
         # Set the embedding to zeros
         d_model: int = 4
-        embedding: Float[Tensor, "batch pos d_model"] = torch.zeros(1, 4, d_model)
+        embedding: BatchResidualStreamTT = torch.zeros(1, 4, d_model)
 
         # Check for a specific position & dimension
         position: int = 2
@@ -79,7 +80,7 @@ class TestPositionalEncoding:
 
         # Compare against the module
         layer = PositionalEncoding(d_model, 1024)
-        encoding: Float[Tensor, "batch pos d_model"] = layer(embedding)
+        encoding: BatchResidualStreamTT = layer(embedding)
         assert torch.allclose(
             encoding[0, position, dimension],
             torch.tensor(expected),
@@ -92,11 +93,9 @@ class TestPositionalEncoding:
         """
         d_model: int = 768
         max_positions: int = 1024
-        embedding: Float[Tensor, "batch pos d_model"] = (
-            torch.zeros(1, max_positions, d_model) * 100
-        )
+        embedding: BatchResidualStreamTT = torch.zeros(1, max_positions, d_model) * 100
         layer = PositionalEncoding(d_model, max_positions)
-        encoding: Float[Tensor, "batch pos d_model"] = layer(embedding)
+        encoding: BatchResidualStreamTT = layer(embedding)
         assert not torch.isnan(encoding).any()
 
     def test_positional_encoding_same_across_batch_items(self):
@@ -104,13 +103,13 @@ class TestPositionalEncoding:
         d_model: int = 4
         max_positions: int = 10
         batch_items: int = 2
-        embedding: Float[Tensor, "batch pos d_model"] = torch.zeros(
+        embedding: BatchResidualStreamTT = torch.zeros(
             batch_items,
             max_positions,
             d_model,
         )
         layer = PositionalEncoding(d_model, max_positions)
-        encoding: Float[Tensor, "batch pos d_model"] = layer(embedding)
+        encoding: BatchResidualStreamTT = layer(embedding)
 
         # Check that the positional encoding is the same for both bach items
         assert torch.allclose(encoding[0], encoding[1])

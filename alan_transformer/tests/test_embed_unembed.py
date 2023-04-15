@@ -9,7 +9,13 @@ from torch.utils.data import DataLoader, Dataset, random_split
 
 from alan_transformer.embed_unembed import Embed, Unembed
 
-from ..types import LogitsTT, ResidualStreamTT, TokensTT
+from ..types import (
+    BatchLogitsTT,
+    BatchResidualStreamTT,
+    BatchTokenIndicesTT,
+    LogitsTT,
+    TokenIndicesTT,
+)
 
 
 class UnorderedIntegersDataset(Dataset):
@@ -19,8 +25,8 @@ class UnorderedIntegersDataset(Dataset):
     numbers after this (e.g. {4,2,3,5,1}).
     """
 
-    samples: list[Int[Tensor, " pos"]] = []
-    targets: list[Float[Tensor, "pos d_vocab"]] = []
+    samples: list[TokenIndicesTT] = []
+    targets: list[LogitsTT] = []
 
     def __init__(self, num_samples: int, d_vocab: int):
         """Initialise the dataset.
@@ -33,11 +39,11 @@ class UnorderedIntegersDataset(Dataset):
         for _ in range(num_samples):
             sample = list(range(0, d_vocab - 1))
             random.shuffle(sample)
-            sample_tensor: Int[Tensor, " pos"] = torch.tensor(sample, dtype=torch.long)
+            sample_tensor: TokenIndicesTT = torch.tensor(sample, dtype=torch.long)
             self.samples.append(sample_tensor)
 
             target_indices = sample_tensor + 1
-            target_one_hot: Float[Tensor, "pos d_vocab"] = torch.nn.functional.one_hot(
+            target_one_hot: LogitsTT = torch.nn.functional.one_hot(
                 target_indices, num_classes=d_vocab
             )
             self.targets.append(target_one_hot.float())
@@ -45,9 +51,7 @@ class UnorderedIntegersDataset(Dataset):
     def __len__(self):
         return len(self.samples)
 
-    def __getitem__(
-        self, idx: int
-    ) -> Tuple[Int[Tensor, " pos"], Float[Tensor, "pos d_vocab"]]:
+    def __getitem__(self, idx: int) -> Tuple[TokenIndicesTT, LogitsTT]:
         return self.samples[idx], self.targets[idx]
 
 
@@ -62,8 +66,8 @@ class ZeroLayerModel(nn.Module):
         self.embed = Embed(d_vocab, d_model)
         self.unembed = Unembed(d_vocab, d_model)
 
-    def forward(self, input: TokensTT) -> LogitsTT:
-        residual_stream: ResidualStreamTT = self.embed(input)
+    def forward(self, input: BatchTokenIndicesTT) -> BatchLogitsTT:
+        residual_stream: BatchResidualStreamTT = self.embed(input)
         return self.unembed(residual_stream)
 
 
@@ -118,8 +122,8 @@ def test_learn_order_integers() -> None:
     total = 0
     with torch.no_grad():
         for inputs, targets in test_loader:
-            outputs: LogitsTT = model(inputs)
-            _, predicted = torch.max(outputs, 2)
+            logits: BatchLogitsTT = model(inputs)
+            _, predicted = torch.max(logits, 2)
             _, target_indices = torch.max(targets, 2)
             total += targets.size(0) * targets.size(1)
             correct += (predicted == target_indices).sum().item()

@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Tuple, Type
 import random
 import torch
 import torch.nn as nn
@@ -11,7 +11,7 @@ import pytest
 from alan_transformer.feed_forward import FeedForward
 from alan_transformer.tests.utils.mock_parameter import MockParameterOnes
 
-from ..types import ResidualStreamTT
+from ..types import BatchLogitsTT, BatchResidualStreamTT, ResidualStreamTT
 import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
@@ -52,8 +52,8 @@ class IdentityDataset(RegressionTaskDataset):
     corresponding output neuron.
     """
 
-    def __getitem__(self, index):
-        x = torch.rand(self.sequence_length, self.d_model)
+    def __getitem__(self, index) -> Tuple[ResidualStreamTT, ResidualStreamTT]:
+        x: ResidualStreamTT = torch.rand(self.sequence_length, self.d_model)
         return x, x
 
 
@@ -64,9 +64,9 @@ class BitReversalDataset(RegressionTaskDataset):
     [0, 1, 1, 0, 1, 0, 0, 1, 0, 1], the output should be [1, 0, 1, 0, 0, 1, 0, 1, 1, 0].
     """
 
-    def __getitem__(self, index):
-        x = torch.randint(0, 2, (self.sequence_length, self.d_model))
-        y = x.flip(dims=[1])
+    def __getitem__(self, index) -> Tuple[ResidualStreamTT, ResidualStreamTT]:
+        x: ResidualStreamTT = torch.randint(0, 2, (self.sequence_length, self.d_model))
+        y: ResidualStreamTT = x.flip(dims=[1])
         return x, y
 
 
@@ -78,11 +78,12 @@ class BinaryAdditionDataset(RegressionTaskDataset):
     10-bit sequence that represents the binary sum of the two input numbers.
     """
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> Tuple[ResidualStreamTT, ResidualStreamTT]:
         x = torch.randint(0, 2, (self.sequence_length, self.d_model // 2))
         y = torch.randint(0, 2, (self.sequence_length, self.d_model // 2))
-        z = (x + y).fmod(2)
-        return torch.cat([x, y], dim=1), z
+        concat_x_y: ResidualStreamTT = torch.cat([x, y], dim=1)
+        z: ResidualStreamTT = (x + y).fmod(2)
+        return concat_x_y, z
 
 
 class OddEvenDataset(RegressionTaskDataset):
@@ -93,9 +94,9 @@ class OddEvenDataset(RegressionTaskDataset):
     bits in the last five positions.
     """
 
-    def __getitem__(self, index):
-        x = torch.randint(0, 2, (self.sequence_length, self.d_model))
-        y = torch.stack([x[:, 1::2], x[:, ::2]], dim=1).view(
+    def __getitem__(self, index) -> Tuple[ResidualStreamTT, ResidualStreamTT]:
+        x: ResidualStreamTT = torch.randint(0, 2, (self.sequence_length, self.d_model))
+        y: ResidualStreamTT = torch.stack([x[:, 1::2], x[:, ::2]], dim=1).view(
             self.sequence_length, self.d_model
         )
         return x, y
@@ -144,7 +145,7 @@ def test_feed_forward_learns_on_dataset(dataset_class: Type[RegressionTaskDatase
         model.train()
         for i, (inputs, targets) in enumerate(train_loader):
             optimizer.zero_grad()
-            outputs = model(inputs)
+            outputs: BatchLogitsTT = model(inputs)
             loss = criterion(outputs, targets)
             loss.backward()
             optimizer.step()

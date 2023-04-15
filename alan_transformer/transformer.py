@@ -4,7 +4,12 @@ from torch import Tensor, nn
 from alan_transformer.embed_unembed import Embed, Unembed
 from alan_transformer.layer import Layer
 from alan_transformer.positional_encoding import PositionalEncoding
-from alan_transformer.types import LogitsTT, ResidualStreamTT
+from alan_transformer.types import (
+    BatchLogitsTT,
+    BatchResidualStreamTT,
+    BatchTokenIndicesTT,
+    TokenIndicesTT,
+)
 
 
 class Transformer(nn.Module):
@@ -54,10 +59,10 @@ class Transformer(nn.Module):
         for _layer_idx in range(n_layers):
             self.layers.append(Layer(d_model=d_model, d_head=d_head, d_hidden=d_hidden))
 
-    def forward(self, tokens: Float[Tensor, "batch pos"]) -> LogitsTT:
+    def forward(self, tokens: BatchTokenIndicesTT) -> BatchLogitsTT:
         """Forward."""
         # Embed + positional encoding
-        x: ResidualStreamTT = self.embed(tokens)
+        x: BatchResidualStreamTT = self.embed(tokens)
         x = self.positional_encoding(x)
 
         # Loop through layers

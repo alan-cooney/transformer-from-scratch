@@ -4,19 +4,29 @@ from typing import Optional
 import torch
 import torch.nn.functional as F
 import wandb
-from jaxtyping import Float
+from jaxtyping import Float, Int
 from torch import Tensor, optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from alan_transformer.transformer import Transformer
-from alan_transformer.types import LogitsTT, TokensTT
+from alan_transformer.types import (
+    BATCH,
+    D_VOCAB,
+    POS_MINUS_1,
+    BatchLogitsTT,
+    BatchTokenIndicesTT,
+)
+
+
+BatchTargetIndicesTT = Int[Tensor, f"{BATCH} {POS_MINUS_1}"]
+BatchLogitsExceptLastTT = Float[Tensor, f"{BATCH} {POS_MINUS_1} {D_VOCAB}"]
 
 
 def cross_entropy_loss(
-    inputs: TokensTT,
-    logits: LogitsTT,
-) -> Float[Tensor, ()]:
+    inputs: BatchTokenIndicesTT,
+    logits: BatchLogitsTT,
+) -> Float[Tensor, " "]:
     """Language Model Cross Entropy Loss
 
     Loss is calculated as the average negative log probs of the correct tokens.
@@ -32,20 +42,20 @@ def cross_entropy_loss(
     """
     # Targets are inputs except for the first one (which we aren't predicting)
     # Logits except last exclude the last one (which we don't have a target for)
-    target: Float[Tensor, "batch pos_minus_1"] = inputs[:, 1:]
-    logits_except_last: Float[Tensor, "batch pos_minus_1 d_vocab"] = logits[
+    target: BatchTargetIndicesTT = inputs[:, 1:]
+    logits_except_last: BatchLogitsExceptLastTT = logits[
         :,
         :-1,
         :,
     ].float()
 
-    log_probs: Float[Tensor, "batch pos_minus_1 d_vocab"] = F.log_softmax(
+    log_probs: BatchLogitsExceptLastTT = F.log_softmax(
         logits_except_last,
         dim=-1,
     )
 
     # Predicted log probs are the log probs of the correct tokens
-    index: Float[Tensor, "batch pos_mins_1", 1] = target.unsqueeze(-1)
+    index: Float[BatchTargetIndicesTT, 1] = target.unsqueeze(-1)
     predicted_log_probs = log_probs.gather(-1, index)
 
     # Cross entropy loss
@@ -58,7 +68,7 @@ def train_loop(
     epochs: int = 1,
     save_frequency_batches: int = 10,
     checkpoint_dir: Path = Path(".checkpoints"),
-    d_vocab: int = 50432,
+    d_vocab: int = 50000,
     device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
     max_batches: Optional[int] = None,
 ) -> None:
@@ -99,11 +109,14 @@ def train_loop(
                     break
 
                 # Move inputs to the device
-                inputs: TokensTT = batch["input_ids"].to(device)
+                print("here")
+                print(batch["input_ids"])
+                print(batch["input_ids"].shape)
+                inputs: BatchTokenIndicesTT = batch["input_ids"].to(device)
 
                 # Forward pass
                 optimizer.zero_grad()
-                logits: LogitsTT = model(inputs)
+                logits: BatchLogitsTT = model(inputs)
                 loss = cross_entropy_loss(inputs, logits)
 
                 # Backward pass

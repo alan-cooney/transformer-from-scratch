@@ -2,7 +2,16 @@ import torch
 from jaxtyping import Float
 from torch import Tensor
 
-from alan_transformer.types import ResidualStreamTT
+from alan_transformer.types import (
+    D_MODEL_HALF,
+    POS,
+    BatchResidualStreamTT,
+    ResidualStreamTT,
+)
+
+PosUnsqueezeTT = Float[Tensor, f"{POS} 1"]
+DModelHalfTT = Float[Tensor, f" {D_MODEL_HALF}"]
+PosDModelHalfTT = Float[Tensor, f"{POS} {D_MODEL_HALF}"]
 
 
 class PositionalEncoding(torch.nn.Module):
@@ -119,7 +128,7 @@ class PositionalEncoding(torch.nn.Module):
     referring to.
     """
 
-    pos_encoding: Float[Tensor, "pos d_model"]
+    pos_encoding: ResidualStreamTT
 
     def __init__(
         self,
@@ -136,11 +145,9 @@ class PositionalEncoding(torch.nn.Module):
 
         # Create everything inside the parentheses
         # inner = pos/(10000^(2i/d_model) = pos/wavelength
-        positions: Float[Tensor, "pos 1"] = torch.arange(0, max_tokens).unsqueeze(1)
-        dimensions_2: Float[Tensor, " d_model_half"] = torch.arange(0, d_model, 2)
-        inner: Float[Tensor, "pos d_model_half"] = positions / (
-            10000 ** (dimensions_2 / d_model)
-        )
+        positions: PosUnsqueezeTT = torch.arange(0, max_tokens).unsqueeze(1)
+        dimensions_2: DModelHalfTT = torch.arange(0, d_model, 2)
+        inner: PosDModelHalfTT = positions / (10000 ** (dimensions_2 / d_model))
 
         # Create interweaved positional encoding
         pos_encoding = torch.zeros(max_tokens, d_model)
@@ -149,7 +156,7 @@ class PositionalEncoding(torch.nn.Module):
 
         self.register_buffer("pos_encoding", pos_encoding)
 
-    def forward(self, embedding: ResidualStreamTT) -> ResidualStreamTT:
+    def forward(self, embedding: BatchResidualStreamTT) -> BatchResidualStreamTT:
         """Apply the positional encoding to the given input embedding.
 
         Args:
@@ -161,7 +168,7 @@ class PositionalEncoding(torch.nn.Module):
                 shape as the input embedding (batch_size, tokens, d_model).
         """
         num_tokens_in_embedding: int = embedding.shape[-2]
-        trimmed_pos_encoding: Float[Tensor, "pos d_model"] = self.pos_encoding[
+        trimmed_pos_encoding: ResidualStreamTT = self.pos_encoding[
             :num_tokens_in_embedding,
             :,
         ]

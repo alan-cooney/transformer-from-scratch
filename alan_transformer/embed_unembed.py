@@ -4,7 +4,16 @@ from jaxtyping import Float
 from torch import Tensor, nn
 import math
 
-from alan_transformer.types import LogitsTT, ResidualStreamTT, TokensTT
+from alan_transformer.types import (
+    D_VOCAB,
+    D_MODEL,
+    BatchLogitsTT,
+    BatchResidualStreamTT,
+    BatchTokenIndicesTT,
+)
+
+
+EmbedUnembedWeightsTT = Float[Tensor, f"{D_VOCAB} {D_MODEL}"]
 
 
 class Embed(nn.Module):
@@ -32,7 +41,7 @@ class Embed(nn.Module):
 
         self.d_model: int = d_model
 
-        self.embed_weights: Float[Tensor, "vocab d_model"] = nn.Parameter(
+        self.embed_weights: EmbedUnembedWeightsTT = nn.Parameter(
             torch.empty(d_vocab, d_model),
         )
 
@@ -41,7 +50,7 @@ class Embed(nn.Module):
         # symmetrical activation function (e.g. tanh) or no activation function (as here).
         nn.init.xavier_uniform_(self.embed_weights)
 
-    def forward(self, tokens: TokensTT) -> ResidualStreamTT:
+    def forward(self, tokens: BatchTokenIndicesTT) -> BatchResidualStreamTT:
         """Forward Pass through the Embedding Layer.
 
         The original paper multiples the embedding by sqrt(d_model) during the forward pass,
@@ -73,13 +82,13 @@ class Unembed(nn.Module):
         """
         super().__init__()
 
-        self.unembed_weights: Float[Tensor, "d_model vocab"] = nn.Parameter(
+        self.unembed_weights: EmbedUnembedWeightsTT = nn.Parameter(
             torch.empty(d_model, d_vocab),
         )
 
         nn.init.xavier_uniform_(self.unembed_weights)
 
-    def forward(self, residual_stream: ResidualStreamTT) -> LogitsTT:
+    def forward(self, residual_stream: BatchResidualStreamTT) -> BatchLogitsTT:
         """Forward Pass through the Unembedding Layer.
 
         Args:

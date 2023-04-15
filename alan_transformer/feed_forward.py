@@ -3,9 +3,13 @@ from fancy_einsum import einsum
 from jaxtyping import Float
 from torch import Tensor, nn
 
-from alan_transformer.types import ResidualStreamTT
+from alan_transformer.types import BATCH, D_HIDDEN, D_MODEL, POS, BatchResidualStreamTT
 
-HiddenTT = Float[Tensor, "batch pos d_hidden"]
+BatchHiddenTT = Float[Tensor, f"{BATCH} {POS} {D_HIDDEN}"]
+InnerWeightsTT = Float[Tensor, f"{D_MODEL} {D_HIDDEN}"]
+InnerBiasTT = Float[Tensor, f"{D_HIDDEN}"]
+OuterWeightsTT = Float[Tensor, f"{D_HIDDEN} {D_MODEL}"]
+OuterBiasTT = Float[Tensor, f"{D_MODEL}"]
 
 
 class FeedForward(nn.Module):
@@ -25,17 +29,17 @@ class FeedForward(nn.Module):
         """
         super().__init__()
 
-        self.weight_inner: Float[Tensor, "d_model d_hidden"] = nn.Parameter(
+        self.weight_inner: InnerWeightsTT = nn.Parameter(
             torch.empty(d_model, d_hidden),
         )
 
-        self.bias_inner: Float[Tensor, "d_hidden"] = nn.Parameter(torch.zeros(d_hidden))
+        self.bias_inner: InnerBiasTT = nn.Parameter(torch.zeros(d_hidden))
 
-        self.weight_outer: Float[Tensor, "d_hidden d_model"] = nn.Parameter(
+        self.weight_outer: OuterWeightsTT = nn.Parameter(
             torch.empty(d_hidden, d_model),
         )
 
-        self.bias_outer: Float[Tensor, "d_model"] = nn.Parameter(torch.zeros(d_model))
+        self.bias_outer: OuterBiasTT = nn.Parameter(torch.zeros(d_model))
 
         # Initialise the weights
         # We use Kaiming Initialization for the inner weights, as we have a non-symmetric activation
@@ -45,7 +49,7 @@ class FeedForward(nn.Module):
         # We use Xavier Initialization for the outer weights, as we have no activation function
         nn.init.xavier_normal_(self.weight_outer)
 
-    def forward(self, residual_stream: ResidualStreamTT) -> ResidualStreamTT:
+    def forward(self, residual_stream: BatchResidualStreamTT) -> BatchResidualStreamTT:
         """Forward Pass through the Feed Forward Sub-Layer.
 
         Args:
@@ -55,16 +59,16 @@ class FeedForward(nn.Module):
             ResidualStreamTT: Feed Forward output
         """
         # Inner = relu(x W1 + b1)
-        inner_pre_bias: HiddenTT = einsum(
+        inner_pre_bias: BatchHiddenTT = einsum(
             "batch pos d_model, d_model d_hidden -> batch pos d_hidden",
             residual_stream,
             self.weight_inner,
         )
         inner = inner_pre_bias + self.bias_inner
-        inner_relu: HiddenTT = torch.relu(inner)
+        inner_relu: BatchHiddenTT = torch.relu(inner)
 
         # Outer = inner @ W2 + b2
-        outer_pre_bias: ResidualStreamTT = einsum(
+        outer_pre_bias: BatchResidualStreamTT = einsum(
             "batch pos d_hidden, d_hidden d_model -> batch pos d_model",
             inner_relu,
             self.weight_outer,

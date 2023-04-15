@@ -6,13 +6,23 @@ from fancy_einsum import einsum
 from jaxtyping import Float
 from torch import Tensor, nn
 
-QueryTT = Float[Tensor, "batch head dest d_head"]
-KeyTT = Float[Tensor, "batch head src d_head"]
-ValueTT = Float[Tensor, "batch head src d_head"]
-QKVWeightTT = Float[Tensor, "head d_model d_head"]
-AttentionPatternTT = Float[Tensor, "batch head dest src"]
-AttentionOutputTT = Float[Tensor, "batch head pos d_head"]
-ResidualStreamTT = Float[Tensor, "batch pos d_model"]
+from alan_transformer.types import (
+    BATCH,
+    HEAD,
+    D_HEAD,
+    D_MODEL,
+    POS,
+    BatchResidualStreamTT,
+)
+
+BatchQueryTT = Float[Tensor, f"{BATCH} {HEAD} dest {D_HEAD}"]
+BatchKeyTT = Float[Tensor, f"{BATCH} {HEAD} src {D_HEAD}"]
+BatchKeyTransposeTT = Float[Tensor, f"{BATCH} {HEAD} {D_HEAD} src"]
+BatchValueTT = Float[Tensor, f"{BATCH} {HEAD} src {D_HEAD}"]
+BatchQKVWeightTT = Float[Tensor, f"{HEAD} {D_MODEL} {D_HEAD}"]
+BatchWeightOutput = Float[Tensor, f"{D_MODEL} {D_MODEL}"]
+BatchAttentionPatternTT = Float[Tensor, f"{BATCH} {HEAD} dest src"]
+BatchAttentionOutputTT = Float[Tensor, f"{BATCH} {HEAD} {POS} {D_HEAD}"]
 
 
 class MultiHeadAttention(nn.Module):
@@ -40,16 +50,16 @@ class MultiHeadAttention(nn.Module):
         self.d_head_sqrt: float = math.sqrt(d_head)
 
         # Create the parameters
-        self.weight_query: QKVWeightTT = nn.Parameter(
+        self.weight_query: BatchQKVWeightTT = nn.Parameter(
             torch.empty(n_heads, d_model, d_head),
         )
-        self.weight_key: QKVWeightTT = nn.Parameter(
+        self.weight_key: BatchQKVWeightTT = nn.Parameter(
             torch.empty(n_heads, d_model, d_head),
         )
-        self.weight_value: QKVWeightTT = nn.Parameter(
+        self.weight_value: BatchQKVWeightTT = nn.Parameter(
             torch.empty(n_heads, d_model, d_head),
         )
-        self.weight_out: Float[Tensor, "d_model d_model"] = nn.Parameter(
+        self.weight_out: BatchWeightOutput = nn.Parameter(
             torch.empty(d_model, d_model),
         )
 
@@ -66,7 +76,9 @@ class MultiHeadAttention(nn.Module):
         minus_infinity_triangle = torch.triu(minus_infinity, diagonal=1)
         self.register_buffer("minus_infinity_triangle", minus_infinity_triangle)
 
-    def mask(self, attention_pattern: AttentionPatternTT) -> AttentionPatternTT:
+    def mask(
+        self, attention_pattern: BatchAttentionPatternTT
+    ) -> BatchAttentionPatternTT:
         """Mask the attention pattern.
 
         Values are masked out with minus infinity
@@ -78,10 +90,10 @@ class MultiHeadAttention(nn.Module):
 
     def attention(
         self,
-        query: QueryTT,
-        key: KeyTT,
-        value: ValueTT,
-    ) -> AttentionOutputTT:
+        query: BatchQueryTT,
+        key: BatchKeyTT,
+        value: BatchValueTT,
+    ) -> BatchAttentionOutputTT:
         """Attention Calculation.
 
         Attention(Q,K,V) = softmax( (Q K^T) / (sqrt(d_head)) ) * V
@@ -97,16 +109,16 @@ class MultiHeadAttention(nn.Module):
             AttentionOutputTT: Attention Output (softmax * value)
         """
         # Calculate the numerator
-        key_transpose: Float[Tensor, "batch head d_head pos"] = rearrange(
+        key_transpose: BatchKeyTransposeTT = rearrange(
             key,
             "batch head pos d_head -> batch head d_head pos",
         )
-        numerator: AttentionPatternTT = query @ key_transpose
+        numerator: BatchAttentionPatternTT = query @ key_transpose
 
         # Apply softmax over the attention pattern
-        attention_pattern: AttentionPatternTT = numerator / self.d_head_sqrt
-        masked_attention: AttentionPatternTT = self.mask(attention_pattern)
-        softmax_part: AttentionPatternTT = torch.softmax(
+        attention_pattern: BatchAttentionPatternTT = numerator / self.d_head_sqrt
+        masked_attention: BatchAttentionPatternTT = self.mask(attention_pattern)
+        softmax_part: BatchAttentionPatternTT = torch.softmax(
             masked_attention,
             dim=-1,  # Apply over the last (src) dimension
         )
@@ -117,7 +129,7 @@ class MultiHeadAttention(nn.Module):
             value,
         )
 
-    def forward(self, residual_stream: ResidualStreamTT) -> ResidualStreamTT:
+    def forward(self, residual_stream: BatchResidualStreamTT) -> BatchResidualStreamTT:
         """Attention layer forward pass.
 
         Note the residual stream is not added back (or normalized)
@@ -125,32 +137,32 @@ class MultiHeadAttention(nn.Module):
         https://arxiv.org/pdf/1706.03762.pdf (p5)
         """
         # Create the query, key and value
-        query: QueryTT = einsum(
+        query: BatchQueryTT = einsum(
             "batch pos d_model, head d_model d_head -> batch head pos d_head",
             residual_stream,
             self.weight_query,
         )
-        key: KeyTT = einsum(
+        key: BatchKeyTT = einsum(
             "batch pos d_model, head d_model d_head -> batch head pos d_head",
             residual_stream,
             self.weight_key,
         )
-        value: ValueTT = einsum(
+        value: BatchValueTT = einsum(
             "batch pos d_model, head d_model d_head -> batch head pos d_head",
             residual_stream,
             self.weight_value,
         )
 
         # Get the attention & concat
-        attn: AttentionOutputTT = self.attention(query, key, value)
-        attn_concat: ResidualStreamTT = rearrange(
+        attn: BatchAttentionOutputTT = self.attention(query, key, value)
+        attn_concat: BatchResidualStreamTT = rearrange(
             attn,
             # (head d_head) is the same size as d_model
             "batch head pos d_head -> batch pos (head d_head)",
         )
 
         # Multiply by W_O
-        multi_head_out: ResidualStreamTT = einsum(
+        multi_head_out: BatchResidualStreamTT = einsum(
             "batch pos d_model, d_model d_model -> batch pos d_model",
             attn_concat,
             self.weight_out,

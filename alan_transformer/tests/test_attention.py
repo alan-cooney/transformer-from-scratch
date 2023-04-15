@@ -10,22 +10,28 @@ from torch import Tensor
 from torch.utils.data import DataLoader, Dataset, random_split
 
 from alan_transformer.attention import (
-    AttentionOutputTT,
-    AttentionPatternTT,
-    KeyTT,
+    BatchAttentionOutputTT,
+    BatchAttentionPatternTT,
+    BatchKeyTT,
     MultiHeadAttention,
-    QueryTT,
-    ValueTT,
+    BatchQueryTT,
+    BatchValueTT,
+)
+from alan_transformer.types import (
+    BATCH,
+    D_MODEL,
+    BatchResidualStreamTT,
+    ResidualStreamTT,
 )
 
 
 class TestMask:
     def test_mask(self):
         """Test that it masks correctly"""
-        attention_pattern: AttentionPatternTT = (
+        attention_pattern: BatchAttentionPatternTT = (
             torch.tensor([[1.0, 1], [1, 1]]).unsqueeze(0).unsqueeze(0)
         )
-        expected: AttentionPatternTT = (
+        expected: BatchAttentionPatternTT = (
             torch.tensor([[1.0, float("-inf")], [1, 1]]).unsqueeze(0).unsqueeze(0)
         )
 
@@ -39,9 +45,11 @@ class TestAttentionCalculation:
     def test_attention_simple(self):
         """Test a simple attention calculation"""
         # Create the query, key and value
-        query: QueryTT = torch.tensor([[1.0, 2], [3, 4]]).unsqueeze(0).unsqueeze(0)
-        key: KeyTT = torch.tensor([[5.0, 6], [7, 8]]).unsqueeze(0).unsqueeze(0)
-        value: ValueTT = torch.tensor([[9.0, 10], [11, 12]]).unsqueeze(0).unsqueeze(0)
+        query: BatchQueryTT = torch.tensor([[1.0, 2], [3, 4]]).unsqueeze(0).unsqueeze(0)
+        key: BatchKeyTT = torch.tensor([[5.0, 6], [7, 8]]).unsqueeze(0).unsqueeze(0)
+        value: BatchValueTT = (
+            torch.tensor([[9.0, 10], [11, 12]]).unsqueeze(0).unsqueeze(0)
+        )
 
         # Create the expected output
         numerator = query @ key.transpose(-2, -1)
@@ -57,10 +65,14 @@ class TestAttentionCalculation:
         attention_layer = MultiHeadAttention(d_head=2, d_model=4)
 
         # Calculate the output
-        output: AttentionOutputTT = attention_layer.attention(query, key, value)
+        output: BatchAttentionOutputTT = attention_layer.attention(query, key, value)
 
         # Check the output
         assert torch.allclose(output, expected)
+
+
+ResidualStreamTokenTT = Float[Tensor, f" {D_MODEL}"]
+BatchResidualStreamTokenTT = Float[Tensor, f" {BATCH} {D_MODEL}"]
 
 
 class FlaggedToken(Dataset):
@@ -86,19 +98,17 @@ class FlaggedToken(Dataset):
     what to do after attending to that token.
     """
 
-    samples: list[Float[Tensor, "pos d_model"]] = []
-    targets: list[Float[Tensor, " d_model"]] = []
+    samples: list[ResidualStreamTT] = []
+    targets: list[ResidualStreamTokenTT] = []
 
     def __init__(self, sequence_length: int, d_model: int, num_samples: int):
         for _ in range(num_samples):
             # Source token
-            source_token: Float[Tensor, [" d_model"]] = torch.rand((1, d_model))
+            source_token: ResidualStreamTokenTT = torch.rand((1, d_model))
             source_token[0, 0] = 10
 
             # Other tokens
-            other_tokens: Float[Tensor, ["pos_minus_1 d_model"]] = torch.rand(
-                (sequence_length - 1, d_model)
-            )
+            other_tokens = torch.rand((sequence_length - 1, d_model))
             other_tokens[:, 0] = 0.1
 
             # Create the sample & targets
@@ -149,11 +159,9 @@ class TestMultiHeadAttention:
             model.train()
             for i, (inputs, targets) in enumerate(train_loader):
                 optimizer.zero_grad()
-                outputs: Float[Tensor, "batch pos d_model"] = model(inputs)
-                predicted_next_tokens: Float[Tensor, "batch d_model"] = outputs[
-                    :, -1, :
-                ]
-                loss: Float[Tensor, "batch d_model"] = criterion(
+                outputs: BatchResidualStreamTT = model(inputs)
+                predicted_next_tokens: BatchResidualStreamTokenTT = outputs[:, -1, :]
+                loss: BatchResidualStreamTokenTT = criterion(
                     predicted_next_tokens, targets.squeeze(1)
                 )
                 loss.backward()
