@@ -80,11 +80,21 @@ class BinaryAdditionDataset(RegressionTaskDataset):
     10-bit sequence that represents the binary sum of the two input numbers.
     """
 
+    def binary_addition(self, x: torch.Tensor, y: torch.Tensor) -> ResidualStreamTT:
+        carry = 0
+        z = torch.zeros_like(x)
+
+        for i in range(x.size(1) - 1, -1, -1):
+            z[:, i] = (x[:, i] + y[:, i] + carry) % 2
+            carry = (x[:, i] + y[:, i] + carry) // 2
+
+        return z
+
     def __getitem__(self, index) -> Tuple[ResidualStreamTT, ResidualStreamTT]:
         x = torch.randint(0, 2, (self.sequence_length, self.d_model // 2))
         y = torch.randint(0, 2, (self.sequence_length, self.d_model // 2))
         concat_x_y: ResidualStreamTT = torch.cat([x, y], dim=1).float()
-        z: ResidualStreamTT = (x + y).fmod(2)
+        z: ResidualStreamTT = self.binary_addition(x, y)
         return concat_x_y, z
 
 
@@ -161,12 +171,13 @@ def test_feed_forward_learns_on_dataset(dataset_class: Type[RegressionTaskDatase
     with torch.no_grad():
         for inputs, targets in test_loader:
             outputs = model(inputs)
-            for _batch in outputs:
-                # We define correct as the model output being within 1e-3 (relative distance) from
-                # the target
-                if torch.allclose(inputs, targets, rtol=1e-3, atol=0):
-                    correct += 1
-                total += 1
+            for batch_idx, output in enumerate(outputs):
+                for token_idx, token in enumerate(output):
+                    target_token = targets[batch_idx][token_idx]
+                    # We use low absolute difference as the numbers should be either 0 or 1.
+                    if torch.allclose(token, target_token, rtol=0, atol=0.3):
+                        correct += 1
+                    total += 1
 
     accuracy = correct / total
     assert accuracy > 0.9, f"Expected accuracy > 0.9, but got {accuracy}"
