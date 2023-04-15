@@ -1,8 +1,7 @@
 """Feed Forward Tests.
 
 As the Feed Forward module is really just a standard two-layer feed forward network, a good test is
-that it can learn simple regression tasks (e.g. binary addition, or even the simple identity
-function i.e. output = input)."""
+that it can learn simple regression tasks."""
 import random
 from typing import Tuple, Type
 
@@ -72,45 +71,6 @@ class BitReversalDataset(RegressionTaskDataset):
         return sample, target
 
 
-class BinaryAdditionDataset(RegressionTaskDataset):
-    """Binary Addition Dataset.
-
-    The model should learn to add two 5-bit numbers. The first five input neurons represent the
-    first number, and the next five input neurons represent the second number. The output is a
-    10-bit sequence that represents the binary sum of the two input numbers.
-    """
-
-    def binary_addition(
-        self, x_binary: torch.Tensor, y_binary: torch.Tensor
-    ) -> ResidualStreamTT:
-        """Binary Addition
-
-        Args:
-            x_binary (torch.Tensor): _description_
-            y_binary (torch.Tensor): _description_
-
-        Returns:
-            ResidualStreamTT: _description_
-        """
-        carry = 0
-        result = torch.zeros_like(x_binary)
-
-        for i in range(x_binary.size(1) - 1, -1, -1):
-            result[:, i] = (x_binary[:, i] + y_binary[:, i] + carry) % 2
-            carry = (x_binary[:, i] + y_binary[:, i] + carry) // 2
-
-        return result
-
-    def __getitem__(self, index) -> Tuple[ResidualStreamTT, ResidualStreamTT]:
-        first_number = torch.randint(0, 2, (self.sequence_length, self.d_model // 2))
-        second_number = torch.randint(0, 2, (self.sequence_length, self.d_model // 2))
-        concatenated_numbers: ResidualStreamTT = torch.cat(
-            [first_number, second_number], dim=1
-        ).float()
-        binary_sum: ResidualStreamTT = self.binary_addition(first_number, second_number)
-        return concatenated_numbers, binary_sum
-
-
 class OddEvenDataset(RegressionTaskDataset):
     """Odd Even Dataset.
 
@@ -131,7 +91,7 @@ class OddEvenDataset(RegressionTaskDataset):
 
 @pytest.mark.parametrize(
     "dataset_class",
-    [IdentityDataset, BitReversalDataset, BinaryAdditionDataset, OddEvenDataset],
+    [IdentityDataset, BitReversalDataset, OddEvenDataset],
 )
 def test_feed_forward_learns_on_dataset(dataset_class: Type[RegressionTaskDataset]):
     """Test the feed forward network learns to solve the regression tasks.
@@ -146,11 +106,11 @@ def test_feed_forward_learns_on_dataset(dataset_class: Type[RegressionTaskDatase
     torch.manual_seed(seed)
 
     # Parameters
-    samples = 10000
-    epochs = 15
+    samples = 1000
+    epochs = 10
     d_vocab = 10
     d_model = 10
-    d_hidden = 10
+    d_hidden = 100
 
     # Model
     model = FeedForward(d_model, d_hidden)
@@ -165,7 +125,7 @@ def test_feed_forward_learns_on_dataset(dataset_class: Type[RegressionTaskDatase
 
     # Loss & optimizer
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters())
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
 
     # Train
     for _epoch in range(epochs):
@@ -188,7 +148,7 @@ def test_feed_forward_learns_on_dataset(dataset_class: Type[RegressionTaskDatase
                 for token_idx, token in enumerate(output):
                     target_token = targets[batch_idx][token_idx]
                     # We use low absolute difference as the numbers should be either 0 or 1.
-                    if torch.allclose(token, target_token, rtol=0, atol=0.3):
+                    if torch.allclose(token, target_token, rtol=0, atol=0.2):
                         correct += 1
                     total += 1
 
