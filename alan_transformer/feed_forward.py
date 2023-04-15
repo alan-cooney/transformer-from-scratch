@@ -3,13 +3,16 @@ from fancy_einsum import einsum
 from jaxtyping import Float
 from torch import Tensor, nn
 
-from alan_transformer.types import BATCH, D_HIDDEN, D_MODEL, POS, BatchResidualStreamTT
+from alan_transformer.types import (
+    D,
+    BatchResidualStreamTT,
+)
 
-BatchHiddenTT = Float[Tensor, f"{BATCH} {POS} {D_HIDDEN}"]
-InnerWeightsTT = Float[Tensor, f"{D_MODEL} {D_HIDDEN}"]
-InnerBiasTT = Float[Tensor, f"{D_HIDDEN}"]
-OuterWeightsTT = Float[Tensor, f"{D_HIDDEN} {D_MODEL}"]
-OuterBiasTT = Float[Tensor, f"{D_MODEL}"]
+BatchHiddenTT = Float[Tensor, f"{D.BATCH} {D.POSITION} {D.HIDDEN_FEATURE}"]
+InnerWeightsTT = Float[Tensor, f"{D.RESIDUAL_FEATURE} {D.HIDDEN_FEATURE}"]
+InnerBiasTT = Float[Tensor, f"{D.HIDDEN_FEATURE}"]
+OuterWeightsTT = Float[Tensor, f"{D.HIDDEN_FEATURE} {D.RESIDUAL_FEATURE}"]
+OuterBiasTT = Float[Tensor, f"{D.RESIDUAL_FEATURE}"]
 
 
 class FeedForward(nn.Module):

@@ -134,7 +134,7 @@ def test_feed_forward_learns_on_dataset(dataset_class: Type[RegressionTaskDatase
 
     # Parameters
     samples = 10000
-    epochs = 10
+    epochs = 15
     d_vocab = 10
     d_model = 10
     d_hidden = 10

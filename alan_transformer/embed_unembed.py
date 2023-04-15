@@ -2,18 +2,16 @@ import torch
 from fancy_einsum import einsum
 from jaxtyping import Float
 from torch import Tensor, nn
-import math
 
 from alan_transformer.types import (
-    D_VOCAB,
-    D_MODEL,
+    D,
     BatchLogitsTT,
     BatchResidualStreamTT,
     BatchTokenIndicesTT,
 )
 
 
-EmbedUnembedWeightsTT = Float[Tensor, f"{D_VOCAB} {D_MODEL}"]
+EmbedUnembedWeightsTT = Float[Tensor, f"{D.VOCAB} {D.RESIDUAL_FEATURE}"]
 
 
 class Embed(nn.Module):

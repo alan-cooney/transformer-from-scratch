@@ -18,8 +18,7 @@ from alan_transformer.attention import (
     BatchValueTT,
 )
 from alan_transformer.types import (
-    BATCH,
-    D_MODEL,
+    D,
     BatchResidualStreamTT,
     ResidualStreamTT,
 )
@@ -71,8 +70,8 @@ class TestAttentionCalculation:
         assert torch.allclose(output, expected)
 
 
-ResidualStreamTokenTT = Float[Tensor, f" {D_MODEL}"]
-BatchResidualStreamTokenTT = Float[Tensor, f" {BATCH} {D_MODEL}"]
+ResidualStreamTokenTT = Float[Tensor, f" {D.RESIDUAL_FEATURE}"]
+BatchResidualStreamTokenTT = Float[Tensor, f"{D.BATCH} {D.RESIDUAL_FEATURE}"]
 
 
 class FlaggedToken(Dataset):

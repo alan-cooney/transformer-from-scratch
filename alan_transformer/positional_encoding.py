@@ -3,15 +3,14 @@ from jaxtyping import Float
 from torch import Tensor
 
 from alan_transformer.types import (
-    D_MODEL_HALF,
-    POS,
+    D,
     BatchResidualStreamTT,
     ResidualStreamTT,
 )
 
-PosUnsqueezeTT = Float[Tensor, f"{POS} 1"]
-DModelHalfTT = Float[Tensor, f" {D_MODEL_HALF}"]
-PosDModelHalfTT = Float[Tensor, f"{POS} {D_MODEL_HALF}"]
+PosUnsqueezeTT = Float[Tensor, f"{D.POSITION} 1"]
+DModelHalfTT = Float[Tensor, f" {D.RESIDUAL_FEATURE_HALF}"]
+PosDModelHalfTT = Float[Tensor, f"{D.POSITION} {D.RESIDUAL_FEATURE_HALF}"]
 
 
 class PositionalEncoding(torch.nn.Module):

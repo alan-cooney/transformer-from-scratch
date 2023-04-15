@@ -7,22 +7,20 @@ from jaxtyping import Float
 from torch import Tensor, nn
 
 from alan_transformer.types import (
-    BATCH,
-    HEAD,
-    D_HEAD,
-    D_MODEL,
-    POS,
+    D,
     BatchResidualStreamTT,
 )
 
-BatchQueryTT = Float[Tensor, f"{BATCH} {HEAD} dest {D_HEAD}"]
-BatchKeyTT = Float[Tensor, f"{BATCH} {HEAD} src {D_HEAD}"]
-BatchKeyTransposeTT = Float[Tensor, f"{BATCH} {HEAD} {D_HEAD} src"]
-BatchValueTT = Float[Tensor, f"{BATCH} {HEAD} src {D_HEAD}"]
-BatchQKVWeightTT = Float[Tensor, f"{HEAD} {D_MODEL} {D_HEAD}"]
-BatchWeightOutput = Float[Tensor, f"{D_MODEL} {D_MODEL}"]
-BatchAttentionPatternTT = Float[Tensor, f"{BATCH} {HEAD} dest src"]
-BatchAttentionOutputTT = Float[Tensor, f"{BATCH} {HEAD} {POS} {D_HEAD}"]
+BatchQueryTT = Float[Tensor, f"{D.BATCH} {D.HEAD} DEST {D.HEAD_FEATURE}"]
+BatchKeyTT = Float[Tensor, f"{D.BATCH} {D.HEAD} SRC {D.HEAD_FEATURE}"]
+BatchKeyTransposeTT = Float[Tensor, f"{D.BATCH} {D.HEAD} {D.HEAD_FEATURE} SRC"]
+BatchValueTT = Float[Tensor, f"{D.BATCH} {D.HEAD} SRC {D.HEAD_FEATURE}"]
+BatchQKVWeightTT = Float[Tensor, f"{D.HEAD} {D.RESIDUAL_FEATURE} {D.HEAD_FEATURE}"]
+BatchWeightOutput = Float[Tensor, f"{D.RESIDUAL_FEATURE} {D.RESIDUAL_FEATURE}"]
+BatchAttentionPatternTT = Float[Tensor, f"{D.BATCH} {D.HEAD} DEST SRC"]
+BatchAttentionOutputTT = Float[
+    Tensor, f"{D.BATCH} {D.HEAD} {D.POSITION} {D.HEAD_FEATURE}"
+]
 
 
 class MultiHeadAttention(nn.Module):

@@ -1,8 +1,6 @@
 import math
 
 import torch
-from jaxtyping import Float
-from torch import Tensor
 
 from alan_transformer.positional_encoding import PositionalEncoding
 from alan_transformer.types import BatchResidualStreamTT, ResidualStreamTT

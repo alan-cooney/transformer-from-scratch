@@ -3,90 +3,98 @@
 Note that we duplicate the dimension annotations in the docstring, so that they also show in e.g.
 VSCode code hints (tooltips)."""
 
+from enum import auto
 from jaxtyping import Float, Int
 from torch import Tensor
 
-#
-# Dimension names
-#
+# Hacky way to import a consistent version of StrEnum across python versions
+# https://tomwojcik.com/posts/2023-01-02/python-311-str-enum-breaking-change
+try:
+    from enum import StrEnum  # type: ignore
+except ImportError:
+    from enum import Enum
 
-POS = "POS"
-"""Position dimension.
+    class StrEnum(str, Enum):
+        pass
 
-Represents the position of tokens in the sequence."""
 
-POS_MINUS_1 = "POS_MINUS_1"
-"""Position dimension minus 1."""
+class TensorShapeLabels(StrEnum):
+    """Tensor Shape Labels
 
-BATCH = "BATCH"
-"""Batch dimension.
+    Tensor shape labels (aka dimension names) used to describe tensors.
+    """
 
-Represents the number of prompts in the batch."""
+    BATCH = "BATCH"
+    """Batch index within a batch."""
 
-D_MODEL = "D_MODEL"
-"""Model dimension.
+    POSITION = "POSITION"
+    """Position within a prompt."""
 
-Represents the dimensions of token vectors in the residual stream."""
+    RESIDUAL_FEATURE = "RESIDUAL_FEATURE"
+    """Residual stream feature within a token (aka `d_model`)."""
 
-D_MODEL_HALF = "D_MODEL_HALF"
-"""Half the model dimension.
+    VOCAB = "VOCAB"
+    """Vocabulary index (token index) within the vocabulary (aka `d_vocab`)."""
 
-Used for positional interweaved encoding."""
+    HEAD = "HEAD"
+    """Head index within the multi-head attention layer."""
 
-D_VOCAB = "D_VOCAB"
-"""Vocabulary dimension.
+    HEAD_FEATURE = "HEAD_FEATURE"
+    """Head feature within a token."""
 
-Represents the number of tokens in the vocabulary."""
+    HIDDEN_FEATURE = "HIDDEN_FEATURE"
+    """Hidden feature within a token (aka `d_hidden`)."""
 
-HEAD = "HEAD"
-"""Head index dimension.
+    POSITION_MINUS_1 = "POSITION_MINUS_1"
+    """Position within a prompt (that excludes the first or last token)."""
 
-Represents the number of heads in the multi-head attention layer."""
+    RESIDUAL_FEATURE_HALF = "RESIDUAL_FEATURE_HALF"
+    """Residual feature within a token,where we only store half the features in one tensor e.g. for
+    positional encoding aka `d_model / 2`)."""
 
-D_HEAD = "D_HEAD"
-"""Head dimension.
 
-Represents the dimensions of token vectors in the attention calculations."""
+# Alias for brevity
+D = TensorShapeLabels
 
-D_HIDDEN = "D_HIDDEN"
-"""Feed Forward (MLP) hidden dimension."""
 
-#
-# Tensor Types
-#
+TokenIndicesTT = Int[Tensor, f" {D.POSITION}"]
+"""Token Indices.
 
-TokenIndicesTT = Int[Tensor, f" {POS}"]
-"""Token Indices
-
-POS
+Shape: (POSITION,)
 """
 
-BatchTokenIndicesTT = Int[Tensor, f"{BATCH} {POS}"]
-"""Batch Token Indices
+BatchTokenIndicesTT = Int[Tensor, f"{D.BATCH} {D.POSITION}"]
+"""Batch Token Indices.
 
-BATCH POS
+Shape: (BATCH, POSITION)
 """
 
-ResidualStreamTT = Float[Tensor, f"{POS} {D_MODEL}"]
-"""Residual stream
+ResidualStreamTT = Float[Tensor, f"{D.POSITION} {D.RESIDUAL_FEATURE}"]
+"""Residual Stream.
 
-POS D_MODEL
+Shape: (POSITION, RESIDUAL_FEATURE)
 """
 
-BatchResidualStreamTT = Float[Tensor, f"{BATCH} {POS} {D_MODEL}"]
-"""Batch Residual stream
+BatchResidualStreamTT = Float[
+    Tensor,
+    f"{D.BATCH} {D.POSITION} {D.RESIDUAL_FEATURE}",
+]
+"""Batch Residual Stream.
 
-BATCH POS D_MODEL
+Shape: (BATCH, POSITION, RESIDUAL_FEATURE)
 """
 
-LogitsTT = Float[Tensor, f"{POS} {D_VOCAB}"]
-"""Logits
+LogitsTT = Float[Tensor, f"{D.POSITION} {D.VOCAB}"]
+"""Logits.
 
-POS D_VOCAB
+Shape: (POSITION, VOCAB)
 """
 
-BatchLogitsTT = Float[Tensor, f"{BATCH} {POS} {D_VOCAB}"]
-"""Batch of logits
+BatchLogitsTT = Float[
+    Tensor,
+    f"{D.BATCH} {D.POSITION} {D.VOCAB}",
+]
+"""Batch of Logits.
 
-BATCH POS D_VOCAB
+Shape: (BATCH, POSITION, VOCAB)
 """
