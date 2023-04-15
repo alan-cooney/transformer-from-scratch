@@ -61,6 +61,6 @@ jobs:
       - name: Black Formatting
         uses: psf/black@stable
       - name: Pylint
-        run: poetry run pylint alan_transformer
+        run: poetry run pylint transformer_from_scratch
       - name: ISort Import Sorting Checks
         run: poetry run isort . --check

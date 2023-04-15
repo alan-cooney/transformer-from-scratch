@@ -2,13 +2,13 @@
 # 📜 Poetry
 ###########
 [tool.poetry]
-name = "alan_transformer"
+name = "transformer_from_scratch"
 version = "0.1.0"
 description = ""
 authors = ["Alan <41682961+alan-cooney@users.noreply.github.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "alan_transformer"}]
+packages = [{include = "transformer_from_scratch"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -53,7 +53,7 @@ build-backend = "poetry.core.masonry.api"
 profile = "black"
 
 [tool.pytest.ini_options]
-addopts = "--jaxtyping-packages=alan_transformer,typeguard.typechecked -s"
+addopts = "--jaxtyping-packages=transformer_from_scratch,typeguard.typechecked -s"
 
 [tool.mypy]
 ignore_missing_imports = true

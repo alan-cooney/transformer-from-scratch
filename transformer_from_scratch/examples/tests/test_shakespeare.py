@@ -1,4 +1,4 @@
-from alan_transformer.examples.shakespeare import (
+from transformer_from_scratch.examples.shakespeare import (
     create_dataloader,
     create_dataset,
     create_tokenizer,

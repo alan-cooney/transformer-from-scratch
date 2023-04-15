@@ -10,8 +10,8 @@ from torch.utils.data import DataLoader
 from transformers import GPTNeoXTokenizerFast
 
 import wandb
-from alan_transformer.train import train_loop
-from alan_transformer.transformer import Transformer
+from transformer_from_scratch.train import train_loop
+from transformer_from_scratch.transformer import Transformer
 
 
 def create_tokenizer() -> GPTNeoXTokenizerFast:

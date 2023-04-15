@@ -3,7 +3,7 @@ import torch
 from jaxtyping import Float
 from torch import Tensor
 
-from alan_transformer.types import (
+from transformer_from_scratch.types import (
     BatchResidualStreamTT,
     TensorShapeLabels as D,
     ResidualStreamTT,

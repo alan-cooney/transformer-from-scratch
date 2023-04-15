@@ -1,8 +1,8 @@
 from torch import nn
 
-from alan_transformer.attention import MultiHeadAttention
-from alan_transformer.feed_forward import FeedForward
-from alan_transformer.types import BatchResidualStreamTT
+from transformer_from_scratch.attention import MultiHeadAttention
+from transformer_from_scratch.feed_forward import FeedForward
+from transformer_from_scratch.types import BatchResidualStreamTT
 
 
 class Layer(nn.Module):

@@ -1,8 +1,8 @@
 import torch
 from torch.nn import functional as F
 
-from alan_transformer.train import cross_entropy_loss
-from alan_transformer.types import BatchLogitsTT, BatchTokenIndicesTT
+from transformer_from_scratch.train import cross_entropy_loss
+from transformer_from_scratch.types import BatchLogitsTT, BatchTokenIndicesTT
 
 
 class TestCrossEntropyLoss:

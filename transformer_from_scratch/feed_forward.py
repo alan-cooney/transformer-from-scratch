@@ -4,7 +4,7 @@ from fancy_einsum import einsum
 from jaxtyping import Float
 from torch import Tensor, nn
 
-from alan_transformer.types import BatchResidualStreamTT, TensorShapeLabels as D
+from transformer_from_scratch.types import BatchResidualStreamTT, TensorShapeLabels as D
 
 BatchHiddenTT = Float[
     Tensor,

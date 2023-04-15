@@ -7,7 +7,7 @@ from fancy_einsum import einsum
 from jaxtyping import Float
 from torch import Tensor, nn
 
-from alan_transformer.types import BatchResidualStreamTT, TensorShapeLabels as D
+from transformer_from_scratch.types import BatchResidualStreamTT, TensorShapeLabels as D
 
 BatchQueryTT = Float[Tensor, f"{D.BATCH} {D.HEAD} DEST {D.HEAD_FEATURE}"]
 BatchKeyTT = Float[Tensor, f"{D.BATCH} {D.HEAD} SRC {D.HEAD_FEATURE}"]

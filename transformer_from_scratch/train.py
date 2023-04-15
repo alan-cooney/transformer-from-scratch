@@ -10,8 +10,8 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 import wandb
-from alan_transformer.transformer import Transformer
-from alan_transformer.types import (
+from transformer_from_scratch.transformer import Transformer
+from transformer_from_scratch.types import (
     BatchLogitsTT,
     BatchTokenIndicesTT,
     TensorShapeLabels as D,

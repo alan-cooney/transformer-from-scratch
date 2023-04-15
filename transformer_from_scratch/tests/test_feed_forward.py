@@ -7,7 +7,7 @@ import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader, Dataset, random_split
 
-from alan_transformer.feed_forward import FeedForward
+from transformer_from_scratch.feed_forward import FeedForward
 
 from ..types import BatchLogitsTT, ResidualStreamTT
 

@@ -3,8 +3,8 @@ import math
 
 import torch
 
-from alan_transformer.positional_encoding import PositionalEncoding
-from alan_transformer.types import BatchResidualStreamTT, ResidualStreamTT
+from transformer_from_scratch.positional_encoding import PositionalEncoding
+from transformer_from_scratch.types import BatchResidualStreamTT, ResidualStreamTT
 
 
 def test_positional_encoding_each_token_unique():

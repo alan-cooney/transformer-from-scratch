@@ -1,10 +1,10 @@
 """Transformer."""
 from torch import nn
 
-from alan_transformer.embed_unembed import Embed, Unembed
-from alan_transformer.layer import Layer
-from alan_transformer.positional_encoding import PositionalEncoding
-from alan_transformer.types import (
+from transformer_from_scratch.embed_unembed import Embed, Unembed
+from transformer_from_scratch.layer import Layer
+from transformer_from_scratch.positional_encoding import PositionalEncoding
+from transformer_from_scratch.types import (
     BatchLogitsTT,
     BatchResidualStreamTT,
     BatchTokenIndicesTT,

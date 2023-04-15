@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset, random_split
 
-from alan_transformer.embed_unembed import Embed, Unembed
+from transformer_from_scratch.embed_unembed import Embed, Unembed
 
 from ..types import (
     BatchLogitsTT,

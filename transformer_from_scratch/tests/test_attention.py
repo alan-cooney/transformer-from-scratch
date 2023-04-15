@@ -10,7 +10,7 @@ from jaxtyping import Float
 from torch import Tensor
 from torch.utils.data import DataLoader, Dataset, random_split
 
-from alan_transformer.attention import (
+from transformer_from_scratch.attention import (
     BatchAttentionOutputTT,
     BatchAttentionPatternTT,
     BatchKeyTT,
@@ -18,7 +18,7 @@ from alan_transformer.attention import (
     BatchValueTT,
     MultiHeadAttention,
 )
-from alan_transformer.types import (
+from transformer_from_scratch.types import (
     BatchResidualStreamTT,
     TensorShapeLabels as D,
     ResidualStreamTT,
