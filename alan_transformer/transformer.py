@@ -1,5 +1,4 @@
-from jaxtyping import Float
-from torch import Tensor, nn
+from torch import nn
 
 from alan_transformer.embed_unembed import Embed, Unembed
 from alan_transformer.layer import Layer
@@ -8,7 +7,6 @@ from alan_transformer.types import (
     BatchLogitsTT,
     BatchResidualStreamTT,
     BatchTokenIndicesTT,
-    TokenIndicesTT,
 )
 
 
