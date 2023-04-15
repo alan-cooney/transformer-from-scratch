@@ -3,7 +3,6 @@
 Note that we duplicate the dimension annotations in the docstring, so that they also show in e.g.
 VSCode code hints (tooltips)."""
 
-from enum import Enum
 from jaxtyping import Float, Int
 from torch import Tensor
 
