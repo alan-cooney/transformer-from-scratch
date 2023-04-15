@@ -14,8 +14,16 @@
         "vscode": {
             // Set *default* container specific settings.json values on container create.
             "settings": {
-                "python.formatting.autopep8Path": "autopep8",
-                "python.linting.mypyPath": "mypy"
+                "python.editor.defaultFormatter": "ms-python.black-formatter",
+                "python.formatting.blackPath": "black",
+                "python.formatting.provider": "black",
+                "python.formatting.yapfPath": "yapf",
+                "python.linting.mypyPath": "mypy",
+                "python.linting.pylintArgs": [
+                    "--generated-members=torch.*"
+                ],
+                "rewrap.autoWrap.enabled": true,
+                "rewrap.wrappingColumn": 100
             },
             // Add the IDs of extensions you want installed when the container is created.
             "extensions": [
@@ -26,6 +34,8 @@
                 "donjayamanne.python-extension-pack",
                 "github.vscode-pull-request-github",
                 "ionutvmi.path-autocomplete",
+                "ms-python.isort",
+                "ms-python.pylint",
                 "ms-python.python",
                 "ms-python.vscode-pylance",
                 "ms-toolsai.jupyter-keymap",
@@ -37,12 +47,11 @@
                 "richie5um2.vscode-sort-json",
                 "stkb.rewrap",
                 "streetsidesoftware.code-spell-checker",
-                "tushortz.python-extended-snippets",
                 "yzhang.markdown-all-in-one"
             ]
         }
     },
     "containerUser": "user",
     // Install any dependencies
-    "postCreateCommand": "pip install ."
+    "postCreateCommand": "poetry config virtualenvs.in-project true && poetry install --with dev"
 }
