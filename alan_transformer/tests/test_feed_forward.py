@@ -65,7 +65,9 @@ class BitReversalDataset(RegressionTaskDataset):
     """
 
     def __getitem__(self, index) -> Tuple[ResidualStreamTT, ResidualStreamTT]:
-        x: ResidualStreamTT = torch.randint(0, 2, (self.sequence_length, self.d_model))
+        x: ResidualStreamTT = torch.randint(
+            0, 2, (self.sequence_length, self.d_model)
+        ).float()
         y: ResidualStreamTT = x.flip(dims=[1])
         return x, y
 
@@ -81,7 +83,7 @@ class BinaryAdditionDataset(RegressionTaskDataset):
     def __getitem__(self, index) -> Tuple[ResidualStreamTT, ResidualStreamTT]:
         x = torch.randint(0, 2, (self.sequence_length, self.d_model // 2))
         y = torch.randint(0, 2, (self.sequence_length, self.d_model // 2))
-        concat_x_y: ResidualStreamTT = torch.cat([x, y], dim=1)
+        concat_x_y: ResidualStreamTT = torch.cat([x, y], dim=1).float()
         z: ResidualStreamTT = (x + y).fmod(2)
         return concat_x_y, z
 
@@ -95,7 +97,9 @@ class OddEvenDataset(RegressionTaskDataset):
     """
 
     def __getitem__(self, index) -> Tuple[ResidualStreamTT, ResidualStreamTT]:
-        x: ResidualStreamTT = torch.randint(0, 2, (self.sequence_length, self.d_model))
+        x: ResidualStreamTT = torch.randint(
+            0, 2, (self.sequence_length, self.d_model)
+        ).float()
         y: ResidualStreamTT = torch.stack([x[:, 1::2], x[:, ::2]], dim=1).view(
             self.sequence_length, self.d_model
         )
