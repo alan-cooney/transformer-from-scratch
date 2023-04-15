@@ -5,12 +5,9 @@ import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset, random_split
 
-from transformer_from_scratch.train import cross_entropy_loss
+from transformer_from_scratch.components.cross_entropy_loss import cross_entropy_loss
 from transformer_from_scratch.transformer import Transformer
-from transformer_from_scratch.types import (
-    BatchLogitsTT,
-    TokenIndicesTT,
-)
+from transformer_from_scratch.types import BatchLogitsTT, TokenIndicesTT
 
 
 class InductionHeadDataset(Dataset):
