@@ -2,11 +2,7 @@ import torch
 from jaxtyping import Float
 from torch import Tensor
 
-from alan_transformer.types import (
-    D,
-    BatchResidualStreamTT,
-    ResidualStreamTT,
-)
+from alan_transformer.types import BatchResidualStreamTT, D, ResidualStreamTT
 
 PosUnsqueezeTT = Float[Tensor, f"{D.POSITION} 1"]
 DModelHalfTT = Float[Tensor, f" {D.RESIDUAL_FEATURE_HALF}"]

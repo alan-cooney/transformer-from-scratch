@@ -1,15 +1,15 @@
+"""Embedding and Unembedding Layers."""
 import torch
 from fancy_einsum import einsum
 from jaxtyping import Float
 from torch import Tensor, nn
 
 from alan_transformer.types import (
-    D,
     BatchLogitsTT,
     BatchResidualStreamTT,
     BatchTokenIndicesTT,
+    D,
 )
-
 
 EmbedUnembedWeightsTT = Float[Tensor, f"{D.VOCAB} {D.RESIDUAL_FEATURE}"]
 

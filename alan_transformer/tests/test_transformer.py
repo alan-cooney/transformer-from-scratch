@@ -1,16 +1,13 @@
-import pytest
+import random
+
 import torch
-import torch.optim as optim
 import torch.nn.functional as F
-from random import randint
+import torch.optim as optim
+from torch.utils.data import DataLoader, Dataset, random_split
+
 from alan_transformer.train import cross_entropy_loss
 from alan_transformer.transformer import Transformer
-from jaxtyping import Float, Int
-from torch import Tensor
-from typing import Tuple
-from torch.utils.data import Dataset, DataLoader, random_split
 from alan_transformer.types import BatchLogitsTT, BatchTokenIndicesTT, TokenIndicesTT
-import random
 
 
 class InductionHeadDataset(Dataset):

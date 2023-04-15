@@ -6,6 +6,8 @@ from alan_transformer.types import BatchLogitsTT, BatchTokenIndicesTT
 
 
 class TestCrossEntropyLoss:
+    """Cross Entropy Loss Tests."""
+
     def test_completely_accurate(self):
         # Create some sample inputs and outputs that are 100% accurate
         # Note the beginning and end of the sample data will be discarded by the

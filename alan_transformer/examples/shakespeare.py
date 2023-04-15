@@ -2,7 +2,6 @@ import urllib
 from pathlib import Path
 from typing import Dict, List
 
-import wandb
 from datasets import load_dataset, load_from_disk
 from datasets.dataset_dict import DatasetDict
 from jaxtyping import Float
@@ -10,6 +9,7 @@ from torch import Tensor
 from torch.utils.data import DataLoader
 from transformers import GPTNeoXTokenizerFast
 
+import wandb
 from alan_transformer.train import train_loop
 from alan_transformer.transformer import Transformer
 

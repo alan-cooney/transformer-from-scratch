@@ -34,5 +34,5 @@ class Layer(nn.Module):
         attn_add_norm = residual_stream + self.layer_norm_ff(attn)
 
         # Feed forward
-        ff = self.feed_forward(attn_add_norm)
-        return attn_add_norm + self.layer_norm_attn(ff)
+        mlp_output = self.feed_forward(attn_add_norm)
+        return attn_add_norm + self.layer_norm_attn(mlp_output)

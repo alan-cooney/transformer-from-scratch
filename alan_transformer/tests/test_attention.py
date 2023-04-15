@@ -1,3 +1,4 @@
+"""Multi-Head Attention Module Tests."""
 import math
 import random
 
@@ -13,18 +14,16 @@ from alan_transformer.attention import (
     BatchAttentionOutputTT,
     BatchAttentionPatternTT,
     BatchKeyTT,
-    MultiHeadAttention,
     BatchQueryTT,
     BatchValueTT,
+    MultiHeadAttention,
 )
-from alan_transformer.types import (
-    D,
-    BatchResidualStreamTT,
-    ResidualStreamTT,
-)
+from alan_transformer.types import BatchResidualStreamTT, D, ResidualStreamTT
 
 
 class TestMask:
+    """Attention Mask Tests."""
+
     def test_mask(self):
         """Test that it masks correctly"""
         attention_pattern: BatchAttentionPatternTT = (
@@ -41,6 +40,8 @@ class TestMask:
 
 
 class TestAttentionCalculation:
+    """Attention Calculation Tests."""
+
     def test_attention_simple(self):
         """Test a simple attention calculation"""
         # Create the query, key and value
@@ -124,8 +125,11 @@ class FlaggedToken(Dataset):
 
 
 class TestMultiHeadAttention:
+    """Multi-Head Attention Module Tests."""
+
     @pytest.mark.parametrize("num_heads", [1, 4])
     def test_attend_flagged_token(self, num_heads: int):
+        """Test that the model can attend to a specific (flagged) token."""
         # Set random seeds
         seed = 42
         random.seed(seed)

@@ -1,12 +1,10 @@
+"""Feed Forward Module."""
 import torch
 from fancy_einsum import einsum
 from jaxtyping import Float
 from torch import Tensor, nn
 
-from alan_transformer.types import (
-    D,
-    BatchResidualStreamTT,
-)
+from alan_transformer.types import BatchResidualStreamTT, D
 
 BatchHiddenTT = Float[Tensor, f"{D.BATCH} {D.POSITION} {D.HIDDEN_FEATURE}"]
 InnerWeightsTT = Float[Tensor, f"{D.RESIDUAL_FEATURE} {D.HIDDEN_FEATURE}"]

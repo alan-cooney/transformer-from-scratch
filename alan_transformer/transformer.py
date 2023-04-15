@@ -1,3 +1,4 @@
+"""Transformer."""
 from torch import nn
 
 from alan_transformer.embed_unembed import Embed, Unembed
@@ -60,12 +61,12 @@ class Transformer(nn.Module):
     def forward(self, tokens: BatchTokenIndicesTT) -> BatchLogitsTT:
         """Forward."""
         # Embed + positional encoding
-        x: BatchResidualStreamTT = self.embed(tokens)
-        x = self.positional_encoding(x)
+        residual_stream: BatchResidualStreamTT = self.embed(tokens)
+        residual_stream = self.positional_encoding(residual_stream)
 
         # Loop through layers
         for layer in self.layers:
-            x = layer(x)
+            residual_stream = layer(residual_stream)
 
         # Unembed and return
-        return self.unembed(x)
+        return self.unembed(residual_stream)

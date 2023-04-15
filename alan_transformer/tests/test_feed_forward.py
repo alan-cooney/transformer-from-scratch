@@ -1,21 +1,15 @@
-from typing import Tuple, Type
+"""Feed Forward Tests."""
 import random
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from jaxtyping import Float
-from torch import Tensor
-from torch.utils.data import DataLoader, Dataset, random_split
+from typing import Tuple, Type
+
 import pytest
+import torch
+from torch import nn, optim
+from torch.utils.data import DataLoader, Dataset, random_split
 
 from alan_transformer.feed_forward import FeedForward
-from alan_transformer.tests.utils.mock_parameter import MockParameterOnes
 
-from ..types import BatchLogitsTT, BatchResidualStreamTT, ResidualStreamTT
-import torch
-import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
-import numpy as np
+from ..types import BatchLogitsTT, ResidualStreamTT
 
 
 class RegressionTaskDataset(Dataset):
@@ -44,6 +38,9 @@ class RegressionTaskDataset(Dataset):
         """
         return self.num_samples
 
+    def __getitem__(self, index: int) -> Tuple[ResidualStreamTT, ResidualStreamTT]:
+        raise NotImplementedError
+
 
 class IdentityDataset(RegressionTaskDataset):
     """Identity Dataset.
@@ -53,8 +50,8 @@ class IdentityDataset(RegressionTaskDataset):
     """
 
     def __getitem__(self, index) -> Tuple[ResidualStreamTT, ResidualStreamTT]:
-        x: ResidualStreamTT = torch.rand(self.sequence_length, self.d_model)
-        return x, x
+        sample: ResidualStreamTT = torch.rand(self.sequence_length, self.d_model)
+        return sample, sample
 
 
 class BitReversalDataset(RegressionTaskDataset):
@@ -65,11 +62,11 @@ class BitReversalDataset(RegressionTaskDataset):
     """
 
     def __getitem__(self, index) -> Tuple[ResidualStreamTT, ResidualStreamTT]:
-        x: ResidualStreamTT = torch.randint(
+        sample: ResidualStreamTT = torch.randint(
             0, 2, (self.sequence_length, self.d_model)
         ).float()
-        y: ResidualStreamTT = x.flip(dims=[1])
-        return x, y
+        target: ResidualStreamTT = sample.flip(dims=[1])
+        return sample, target
 
 
 class BinaryAdditionDataset(RegressionTaskDataset):
@@ -81,21 +78,32 @@ class BinaryAdditionDataset(RegressionTaskDataset):
     """
 
     def binary_addition(self, x: torch.Tensor, y: torch.Tensor) -> ResidualStreamTT:
+        """Binary Addition
+
+        Args:
+            x (torch.Tensor): _description_
+            y (torch.Tensor): _description_
+
+        Returns:
+            ResidualStreamTT: _description_
+        """
         carry = 0
-        z = torch.zeros_like(x)
+        result = torch.zeros_like(x)
 
         for i in range(x.size(1) - 1, -1, -1):
-            z[:, i] = (x[:, i] + y[:, i] + carry) % 2
+            result[:, i] = (x[:, i] + y[:, i] + carry) % 2
             carry = (x[:, i] + y[:, i] + carry) // 2
 
-        return z
+        return result
 
     def __getitem__(self, index) -> Tuple[ResidualStreamTT, ResidualStreamTT]:
-        x = torch.randint(0, 2, (self.sequence_length, self.d_model // 2))
-        y = torch.randint(0, 2, (self.sequence_length, self.d_model // 2))
-        concat_x_y: ResidualStreamTT = torch.cat([x, y], dim=1).float()
-        z: ResidualStreamTT = self.binary_addition(x, y)
-        return concat_x_y, z
+        first_number = torch.randint(0, 2, (self.sequence_length, self.d_model // 2))
+        second_number = torch.randint(0, 2, (self.sequence_length, self.d_model // 2))
+        concatenated_numbers: ResidualStreamTT = torch.cat(
+            [first_number, second_number], dim=1
+        ).float()
+        binary_sum: ResidualStreamTT = self.binary_addition(first_number, second_number)
+        return concatenated_numbers, binary_sum
 
 
 class OddEvenDataset(RegressionTaskDataset):

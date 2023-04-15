@@ -1,7 +1,7 @@
+"""Embedding and unebedding layer tests."""
 import random
 from typing import Tuple
-from jaxtyping import Float, Int
-from torch import Tensor
+
 import torch
 import torch.nn as nn
 import torch.optim as optim

@@ -2,9 +2,13 @@
     "cSpell.words": [
         "allclose",
         "arange",
+        "atol",
         "bigram",
+        "devcontainer",
         "elementwise",
+        "rtol",
         "torchtyping",
+        "unebedding",
         "Unembed",
         "unembedding"
     ],

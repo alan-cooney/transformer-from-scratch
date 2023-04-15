@@ -1,21 +1,17 @@
+"""Training Utilities."""
 from pathlib import Path
 from typing import Optional
 
 import torch
 import torch.nn.functional as F
-import wandb
 from jaxtyping import Float, Int
 from torch import Tensor, optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+import wandb
 from alan_transformer.transformer import Transformer
-from alan_transformer.types import (
-    D,
-    BatchLogitsTT,
-    BatchTokenIndicesTT,
-)
-
+from alan_transformer.types import BatchLogitsTT, BatchTokenIndicesTT, D
 
 BatchTargetIndicesTT = Int[Tensor, f"{D.BATCH} {D.POSITION_MINUS_1}"]
 BatchLogitsExceptLastTT = Float[Tensor, f"{D.BATCH} {D.POSITION_MINUS_1} {D.VOCAB}"]
