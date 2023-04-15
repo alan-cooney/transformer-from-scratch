@@ -53,7 +53,7 @@ class InductionHeadDataset(Dataset):
 
 def test_transformer_induction_heads():
     d_vocab = 50000
-    num_samples = 1000
+    num_samples = 10000
     sequence_length = 20
     epochs = 1
     model = Transformer(d_vocab=d_vocab, n_layers=2)
