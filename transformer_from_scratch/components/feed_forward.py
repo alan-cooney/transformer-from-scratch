@@ -33,8 +33,8 @@ class FeedForward(nn.Module):
         """Feed Forward Sub-Layer Initialisation
 
         Args:
-            d_model (int): Dimensionality of the residual stream
-            d_hidden (int): Dimensionality of the hidden layer
+            d_model (int): Number of residual stream features per token.
+            d_hidden (int): Number of hidden layer features per token.
         """
         super().__init__()
 
