@@ -22,11 +22,8 @@ from transformer_from_scratch.components.attention import (
     BatchValueTT,
     MultiHeadAttention,
 )
-from transformer_from_scratch.types import (
-    BatchResidualStreamTT,
-    TensorShapeLabels as D,
-    ResidualStreamTT,
-)
+from transformer_from_scratch.types import BatchResidualStreamTT, ResidualStreamTT
+from transformer_from_scratch.types import TensorShapeLabels as D
 
 
 class TestMask:
