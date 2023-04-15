@@ -11,10 +11,17 @@ from tqdm import tqdm
 
 import wandb
 from alan_transformer.transformer import Transformer
-from alan_transformer.types import BatchLogitsTT, BatchTokenIndicesTT, D
+from alan_transformer.types import (
+    BatchLogitsTT,
+    BatchTokenIndicesTT,
+    TensorShapeLabels as D,
+)
 
 BatchTargetIndicesTT = Int[Tensor, f"{D.BATCH} {D.POSITION_MINUS_1}"]
-BatchLogitsExceptLastTT = Float[Tensor, f"{D.BATCH} {D.POSITION_MINUS_1} {D.VOCAB}"]
+BatchLogitsExceptLastTT = Float[
+    Tensor,
+    f"{D.BATCH} {D.POSITION_MINUS_1} {D.VOCAB}",
+]
 
 
 def cross_entropy_loss(

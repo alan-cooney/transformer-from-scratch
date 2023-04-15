@@ -18,7 +18,11 @@ from alan_transformer.attention import (
     BatchValueTT,
     MultiHeadAttention,
 )
-from alan_transformer.types import BatchResidualStreamTT, D, ResidualStreamTT
+from alan_transformer.types import (
+    BatchResidualStreamTT,
+    TensorShapeLabels as D,
+    ResidualStreamTT,
+)
 
 
 class TestMask:

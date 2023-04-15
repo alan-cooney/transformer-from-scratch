@@ -14,7 +14,7 @@ except ImportError:
     from enum import Enum
 
     class StrEnum(str, Enum):
-        pass
+        """Backwards compatible string enum."""
 
 
 class TensorShapeLabels(StrEnum):
@@ -50,10 +50,6 @@ class TensorShapeLabels(StrEnum):
     RESIDUAL_FEATURE_HALF = "RESIDUAL_FEATURE_HALF"
     """Residual feature within a token,where we only store half the features in one tensor e.g. for
     positional encoding aka `d_model / 2`)."""
-
-
-# Alias for brevity
-D = TensorShapeLabels
 
 
 TokenIndicesTT = Int[Tensor, f" {D.POSITION}"]

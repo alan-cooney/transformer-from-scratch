@@ -4,9 +4,12 @@ from fancy_einsum import einsum
 from jaxtyping import Float
 from torch import Tensor, nn
 
-from alan_transformer.types import BatchResidualStreamTT, D
+from alan_transformer.types import BatchResidualStreamTT, TensorShapeLabels as D
 
-BatchHiddenTT = Float[Tensor, f"{D.BATCH} {D.POSITION} {D.HIDDEN_FEATURE}"]
+BatchHiddenTT = Float[
+    Tensor,
+    f"{D.BATCH} {D.POSITION} {D.HIDDEN_FEATURE}",
+]
 InnerWeightsTT = Float[Tensor, f"{D.RESIDUAL_FEATURE} {D.HIDDEN_FEATURE}"]
 InnerBiasTT = Float[Tensor, f"{D.HIDDEN_FEATURE}"]
 OuterWeightsTT = Float[Tensor, f"{D.HIDDEN_FEATURE} {D.RESIDUAL_FEATURE}"]

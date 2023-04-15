@@ -1,8 +1,13 @@
+"""Positional Encoding Module."""
 import torch
 from jaxtyping import Float
 from torch import Tensor
 
-from alan_transformer.types import BatchResidualStreamTT, D, ResidualStreamTT
+from alan_transformer.types import (
+    BatchResidualStreamTT,
+    TensorShapeLabels as D,
+    ResidualStreamTT,
+)
 
 PosUnsqueezeTT = Float[Tensor, f"{D.POSITION} 1"]
 DModelHalfTT = Float[Tensor, f" {D.RESIDUAL_FEATURE_HALF}"]
