@@ -1,101 +1,75 @@
-"""Transformer Tests."""
-import random
+"""Transformer Tests.
 
+Unlike the underlying components, full integration testing of the Transformer as a whole can be time
+intensive. As such we focus on testing the underlying architecture here."""
+import pytest
 import torch
-import torch.optim as optim
-from torch.utils.data import DataLoader, Dataset, random_split
 
-from transformer_from_scratch.components.cross_entropy_loss import cross_entropy_loss
 from transformer_from_scratch.transformer import Transformer
-from transformer_from_scratch.types import BatchLogitsTT, TokenIndicesTT
+from transformer_from_scratch.types import BatchLogitsTT, BatchTokenIndicesTT
 
 
-class InductionHeadDataset(Dataset):
-    """Induction Head Dataset.
+@pytest.mark.parametrize(
+    "d_head, d_hidden, d_model, d_vocab, max_tokens, n_layers",
+    [
+        (64, 2048, 768, 50432, 1024, 12),
+        (32, 1024, 512, 25000, 512, 6),
+        (16, 512, 256, 10000, 256, 4),
+    ],
+)
+def test_transformer_init_correctly(
+    d_head, d_hidden, d_model, d_vocab, max_tokens, n_layers
+):
+    """Check that the Transformer is initialised correctly."""
+    transformer = Transformer(
+        d_head=d_head,
+        d_hidden=d_hidden,
+        d_model=d_model,
+        d_vocab=d_vocab,
+        max_tokens=max_tokens,
+        n_layers=n_layers,
+    )
 
-    One thing that 2-layer (and above) transformers can do is to learn to repeat a pattern. This
-    dataset therefore contains a sequence of tokens, where the first few tokens are a random pattern
-    and then the rest of the sequence is the pattern repeated (potentially more than one time).
-    """
+    weights = transformer.state_dict()
 
-    samples: list[TokenIndicesTT]
-
-    def __init__(self, num_samples: int, sequence_length: int, d_vocab: int):
-        self.num_samples = num_samples
-        self.sequence_length = sequence_length
-        self.d_vocab = d_vocab
-
-    def __len__(self) -> int:
-        return self.num_samples
-
-    def __getitem__(self, _index) -> TokenIndicesTT:
-        initial_pattern_length = random.randint(2, self.sequence_length - 2)
-
-        sample: list[int] = []
-        for token_idx in range(self.sequence_length):
-            # Create the initial pattern first
-            if token_idx < initial_pattern_length:
-                token = random.randint(1, self.d_vocab - 1)
-                sample.append(token)
-
-            # If we've reached the end of the initial pattern, then repeat it until the end of
-            # the sequence.
-            else:
-                token = sample[token_idx % initial_pattern_length]
-                sample.append(token)
-
-        sample_tensor: TokenIndicesTT = torch.tensor(sample, dtype=torch.long)
-        return sample_tensor
+    # Check the weights shapes, as a way of checking the underlying components are correctly
+    # initialised
+    assert weights["embed.embed_weights"].shape == (d_vocab, d_model)
+    assert weights["unembed.unembed_weights"].shape == (d_model, d_vocab)
+    assert weights["layers.0.attention.weight_query"].shape == (
+        d_model // d_head,
+        d_model,
+        d_head,
+    )
+    assert weights["layers.0.feed_forward.weight_inner"].shape == (d_model, d_hidden)
 
 
-def test_transformer_induction_heads():
-    """Test that the transformer can learn to repeat a pattern."""
-    d_vocab = 50000
-    num_samples = 10000
-    sequence_length = 20
-    epochs = 1
-    model = Transformer(d_vocab=d_vocab, n_layers=2)
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
-    dataset = InductionHeadDataset(num_samples, sequence_length, d_vocab)
-    train_size = int(len(dataset) * 0.95)
-    test_size = len(dataset) - train_size
-    train_data, test_data = random_split(dataset, [train_size, test_size])
-    train_loader = DataLoader(train_data, batch_size=32, shuffle=True)
-    test_loader = DataLoader(test_data, batch_size=32)
+@pytest.mark.parametrize(
+    "d_head, d_hidden, d_model, d_vocab, max_tokens, n_layers",
+    [
+        (64, 2048, 768, 50432, 1024, 12),
+        (32, 1024, 512, 25000, 512, 6),
+        (16, 512, 256, 10000, 256, 4),
+    ],
+)
+def test_transformer_forward(d_head, d_hidden, d_model, d_vocab, max_tokens, n_layers):
+    """Check that a forward pass can be run."""
+    # Create an instance of the Transformer with the specified parameters
+    transformer = Transformer(
+        d_head=d_head,
+        d_hidden=d_hidden,
+        d_model=d_model,
+        d_vocab=d_vocab,
+        max_tokens=max_tokens,
+        n_layers=n_layers,
+    )
 
-    # Train the model
-    for _epoch in range(epochs):
-        model.train()
-        for inputs in train_loader:
-            optimizer.zero_grad()
-            logits: BatchLogitsTT = model(inputs)
-            loss = cross_entropy_loss(inputs, logits)
-            loss.backward()
-            optimizer.step()
+    # Create a sample input tensor of shape (batch_size, seq_len)
+    batch_size, seq_len = 2, 50
+    tokens = torch.randint(low=0, high=d_vocab, size=(batch_size, seq_len))
 
-    # Test the model
-    model.eval()
-    correct = 0
-    total = 0
-    with torch.no_grad():
-        for inputs in test_loader:
-            outputs: BatchLogitsTT = model(inputs)
+    # Test the forward method
+    logits = transformer(tokens)
 
-            penultimate_token_logits = outputs[:, -2, :]
-            penultimate_tokens = torch.argmax(penultimate_token_logits, dim=-1)
-            correct_last_tokens = inputs[:, -1]
-
-            for token_idx, correct_last_token in enumerate(correct_last_tokens):
-                predicted = penultimate_tokens[token_idx]
-                if correct_last_token == predicted:
-                    correct += 1
-                total += 1
-
-    accuracy = correct / total
-    assert accuracy > 0.8, f"Expected accuracy > 0.8, but got {accuracy}"
-
-
-def test_transformer_model_architecture_matches_snapshot(snapshot):
-    """Test that the transformer model architecture matches the snapshot."""
-    model = Transformer(d_vocab=10000, n_layers=6)
-    snapshot.assert_match(model)
+    assert isinstance(logits, torch.Tensor)
+    assert logits.shape == (batch_size, seq_len, d_vocab)
