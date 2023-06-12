@@ -6,8 +6,6 @@ import pytest
 import torch
 
 from transformer_from_scratch.transformer import Transformer
-from transformer_from_scratch.types import BatchLogitsTT, BatchTokenIndicesTT
-
 
 @pytest.mark.parametrize(
     "d_head, d_hidden, d_model, d_vocab, max_tokens, n_layers",

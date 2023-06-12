@@ -8,16 +8,13 @@ from transformer_from_scratch.types import BatchLogitsTT, BatchTokenIndicesTT
 from transformer_from_scratch.types import TensorShapeLabels as D
 
 BatchTargetIndicesTT = Int[Tensor, f"{D.BATCH} {D.POSITION_MINUS_1}"]
+BatchTargetIndicesUnsqueezeTT = Int[Tensor, f"{D.BATCH} {D.POSITION_MINUS_1} ONE"]
 BatchLogitsExceptLastTT = Float[
     Tensor,
     f"{D.BATCH} {D.POSITION_MINUS_1} {D.VOCAB}",
 ]
 
-
-def cross_entropy_loss(
-    inputs: BatchTokenIndicesTT,
-    logits: BatchLogitsTT,
-) -> Float[Tensor, " "]:
+def cross_entropy_loss(inputs: BatchTokenIndicesTT, logits: BatchLogitsTT):
     """Language Model Cross Entropy Loss
 
     Loss is calculated as the average negative log probs of the correct tokens.
@@ -46,7 +43,7 @@ def cross_entropy_loss(
     )
 
     # Predicted log probs are the log probs of the correct tokens
-    index: Float[BatchTargetIndicesTT, 1] = target.unsqueeze(-1)
+    index: BatchTargetIndicesUnsqueezeTT = target.unsqueeze(-1)
     predicted_log_probs = log_probs.gather(-1, index)
 
     # Cross entropy loss

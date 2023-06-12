@@ -1,0 +1,25 @@
+{
+    "recommendations": [
+        "2gua.rainbow-brackets",
+        "christian-kohler.path-intellisense",
+        "davidanson.vscode-markdownlint",
+        "donjayamanne.githistory",
+        "donjayamanne.python-extension-pack",
+        "github.vscode-pull-request-github",
+        "ionutvmi.path-autocomplete",
+        "ms-python.isort",
+        "ms-python.pylint",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-toolsai.jupyter-keymap",
+        "ms-toolsai.jupyter-renderers",
+        "ms-toolsai.jupyter",
+        "ms-vsliveshare.vsliveshare-pack",
+        "njpwerner.autodocstring",
+        "redhat.vscode-yaml",
+        "richie5um2.vscode-sort-json",
+        "stkb.rewrap",
+        "streetsidesoftware.code-spell-checker",
+        "yzhang.markdown-all-in-one"
+    ]
+}
