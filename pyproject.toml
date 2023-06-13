@@ -34,7 +34,7 @@ nvidia-cufft-cu11 = { version = "10.9.0.58", platform = 'linux' }
 nvidia-curand-cu11 = { version = "10.2.10.91", platform = 'linux' }
 nvidia-cusolver-cu11 = { version = "11.4.0.1", platform = 'linux' }
 nvidia-cusparse-cu11 = { version = "11.7.4.91", platform = 'linux' }
-nvidia-nccl-cu11 = { version = "2.14.3", platform = 'linux' }
+nvidia-nccl-cu11 = { version = "2.16.5", platform = 'linux' }
 nvidia-nvtx-cu11 = { version = "11.7.91", platform = 'linux' }
 triton = { version = "2.0.0", platform = 'linux' }
 

@@ -2251,12 +2251,12 @@ wheel = "*"
 
 [[package]]
 name = "nvidia-nccl-cu11"
-version = "2.14.3"
+version = "2.16.5"
 description = "NVIDIA Collective Communication Library (NCCL) Runtime"
 optional = false
 python-versions = ">=3"
 files = [
-    {file = "nvidia_nccl_cu11-2.14.3-py3-none-manylinux1_x86_64.whl", hash = "sha256:5e5534257d1284b8e825bc3a182c6f06acd6eb405e9f89d49340e98cd8f136eb"},
+    {file = "nvidia_nccl_cu11-2.16.5-py3-none-manylinux1_x86_64.whl", hash = "sha256:948cc9a8c659fc6cc3456dd54844fe203519b82ae87e3e94b9818dd9d94deaad"},
 ]
 
 [[package]]
@@ -4438,4 +4438,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "f4c57ae8abb55f138660d13de3508a2fac4a3004fe92a698697f34b66de219e5"
+content-hash = "bd1e5516ec836253dd16aa86540b2c3787518b2db1ede2cdabe2d4a083c691ac"
