@@ -3,13 +3,13 @@ from pathlib import Path
 from typing import Optional
 
 import torch
-import wandb
 from jaxtyping import Int
 from torch import Tensor, optim, save
 from torch.nn import Module
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+import wandb
 from transformer_from_scratch.components.cross_entropy_loss import cross_entropy_loss
 from transformer_from_scratch.transformer import Transformer
 from transformer_from_scratch.types import BatchLogitsTT, BatchTokenIndicesTT
