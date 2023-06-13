@@ -7,6 +7,7 @@ import torch
 
 from transformer_from_scratch.transformer import Transformer
 
+
 @pytest.mark.parametrize(
     "d_head, d_hidden, d_model, d_vocab, max_tokens, n_layers",
     [

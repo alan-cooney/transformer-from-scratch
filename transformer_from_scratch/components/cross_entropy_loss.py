@@ -14,6 +14,7 @@ BatchLogitsExceptLastTT = Float[
     f"{D.BATCH} {D.POSITION_MINUS_1} {D.VOCAB}",
 ]
 
+
 def cross_entropy_loss(inputs: BatchTokenIndicesTT, logits: BatchLogitsTT):
     """Language Model Cross Entropy Loss
 
