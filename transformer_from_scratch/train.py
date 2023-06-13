@@ -7,7 +7,6 @@ import torch.nn as nn
 import wandb
 from jaxtyping import Int
 from torch import Tensor, optim, save
-from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -29,11 +28,10 @@ def get_default_device() -> torch.device:
     if torch.backends.mps.is_built():
         return torch.device("mps")
 
-    elif torch.cuda.is_available():
+    if torch.cuda.is_available():
         return torch.device("cuda")
 
-    else:
-        return torch.device("cpu")
+    return torch.device("cpu")
 
 
 def evaluate(
