@@ -4,7 +4,8 @@ from typing import Optional
 
 import torch
 from jaxtyping import Int
-from torch import Tensor, optim, save
+from torch import Tensor, optim
+from torch import save as torch_save
 from torch.nn import Module
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -148,5 +149,5 @@ def train_loop(
             )
 
         # Save model parameters
-        save(model.state_dict(), checkpoint_dir / f"model_{epoch}.pt")
-        save(model.state_dict(), latest_checkpoint)
+        torch_save(model.state_dict(), checkpoint_dir / f"model_{epoch}.pt")
+        torch_save(model.state_dict(), latest_checkpoint)
