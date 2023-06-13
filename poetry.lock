@@ -1531,13 +1531,13 @@ files = [
 
 [[package]]
 name = "jupyterlab-server"
-version = "2.22.1"
+version = "2.23.0"
 description = "A set of server components for JupyterLab and JupyterLab like applications."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "jupyterlab_server-2.22.1-py3-none-any.whl", hash = "sha256:1c8eb55c7cd70a50a51fef42a7b4e26ef2f7fc48728f0290604bd89b1dd156e6"},
-    {file = "jupyterlab_server-2.22.1.tar.gz", hash = "sha256:dfaaf898af84b9d01ae9583b813f378b96ee90c3a66f24c5186ea5d1bbdb2089"},
+    {file = "jupyterlab_server-2.23.0-py3-none-any.whl", hash = "sha256:a5ea2c839336a8ba7c38c8e7b2f24cedf919f0d439f4d2e606d9322013a95788"},
+    {file = "jupyterlab_server-2.23.0.tar.gz", hash = "sha256:83c01aa4ad9451cd61b383e634d939ff713850f4640c0056b2cdb2b6211a74c7"},
 ]
 
 [package.dependencies]
@@ -1551,7 +1551,7 @@ packaging = ">=21.3"
 requests = ">=2.28"
 
 [package.extras]
-docs = ["autodoc-traits", "docutils (<0.20)", "jinja2 (<3.2.0)", "mistune (<3)", "myst-parser", "pydata-sphinx-theme", "sphinx", "sphinx-copybutton", "sphinxcontrib-openapi"]
+docs = ["autodoc-traits", "jinja2 (<3.2.0)", "mistune (<4)", "myst-parser", "pydata-sphinx-theme", "sphinx", "sphinx-copybutton", "sphinxcontrib-openapi (>0.8)"]
 openapi = ["openapi-core (>=0.16.1,<0.17.0)", "ruamel-yaml"]
 test = ["hatch", "ipykernel", "jupyterlab-server[openapi]", "openapi-spec-validator (>=0.5.1,<0.6.0)", "pytest (>=7.0)", "pytest-console-scripts", "pytest-cov", "pytest-jupyter[server] (>=0.6.2)", "pytest-timeout", "requests-mock", "sphinxcontrib-spelling", "strict-rfc3339", "werkzeug"]
 
@@ -4190,4 +4190,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "ff4d8b6a0ba08b422574b4c4a8aaef674b2da6d44561d29dcdab473282c9327d"
+content-hash = "c1357d28c8cb6e328eecab10d83d5454b70f6608f63bc344d7fe8c5cdac7e50e"
