@@ -110,9 +110,7 @@ class TestTrainLoop:
     def test_model_parameters_change(self, tmpdir):
         """Test that model parameters change after training."""
         model = Transformer()
-        inputs: BatchTokenIndicesTT = torch.tensor(
-            [[3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3]]
-        )
+        inputs: BatchTokenIndicesTT = torch.randint(low=0, high=10, size=(4, 3))
         dataset = MyDataset(inputs)
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=2)
         checkpoint_dir = Path(tmpdir)
@@ -135,3 +133,6 @@ class TestTrainLoop:
             assert not torch.equal(
                 param, initial
             ), "Model parameter did not change during training"
+            assert torch.allclose(
+                param, initial, atol=0.1
+            ), "Model parameter changed too much during training"
