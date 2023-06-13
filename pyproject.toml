@@ -12,7 +12,7 @@ packages = [{include = "transformer_from_scratch"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-torch = ">=1.10"
+torch = "^2.0.1"
 fancy-einsum = "^0.0.3"
 einops = "^0.6.1"
 typeguard = "^4.0.0"
