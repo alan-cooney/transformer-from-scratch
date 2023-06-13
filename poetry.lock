@@ -2179,18 +2179,16 @@ wheel = "*"
 
 [[package]]
 name = "nvidia-cudnn-cu11"
-version = "8.5.0.96"
+version = "8.9.2.26"
 description = "cuDNN runtime libraries"
 optional = false
 python-versions = ">=3"
 files = [
-    {file = "nvidia_cudnn_cu11-8.5.0.96-2-py3-none-manylinux1_x86_64.whl", hash = "sha256:402f40adfc6f418f9dae9ab402e773cfed9beae52333f6d86ae3107a1b9527e7"},
-    {file = "nvidia_cudnn_cu11-8.5.0.96-py3-none-manylinux1_x86_64.whl", hash = "sha256:71f8111eb830879ff2836db3cccf03bbd735df9b0d17cd93761732ac50a8a108"},
+    {file = "nvidia_cudnn_cu11-8.9.2.26-py3-none-manylinux1_x86_64.whl", hash = "sha256:e4452e683173adb305369c1b7b3b1e2949fbe9d96495d881e7113ae9ff61f538"},
 ]
 
 [package.dependencies]
-setuptools = "*"
-wheel = "*"
+nvidia-cublas-cu11 = "*"
 
 [[package]]
 name = "nvidia-cufft-cu11"
@@ -4438,4 +4436,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "f4c57ae8abb55f138660d13de3508a2fac4a3004fe92a698697f34b66de219e5"
+content-hash = "d4bd6fc3b80d92b2c994b8ef8ccd7024b58d217888fb004b33fba90527c117a3"
