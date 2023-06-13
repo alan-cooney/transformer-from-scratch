@@ -139,8 +139,8 @@ class PositionalEncoding(torch.nn.Module):
 
         # Create everything inside the parentheses
         # inner = pos/(10000^(2i/d_model) = pos/wavelength
-        positions: PosUnsqueezeTT = torch.arange(0, max_tokens).unsqueeze(1)
-        dimensions_2: DModelHalfTT = torch.arange(0, d_model, 2)
+        positions: PosUnsqueezeTT = torch.arange(0, max_tokens).unsqueeze(1).float()
+        dimensions_2: DModelHalfTT = torch.arange(0, d_model, 2).float()
         inner: PosDModelHalfTT = positions / (10000 ** (dimensions_2 / d_model))
 
         # Create interweaved positional encoding

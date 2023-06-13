@@ -6,7 +6,6 @@ import pytest
 import torch
 
 from transformer_from_scratch.transformer import Transformer
-from transformer_from_scratch.types import BatchLogitsTT, BatchTokenIndicesTT
 
 
 @pytest.mark.parametrize(
