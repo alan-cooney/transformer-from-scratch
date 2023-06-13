@@ -1,8 +1,10 @@
+from pathlib import Path
 from typing import Dict
 import torch
 from torch.utils.data import Dataset
 
-from transformer_from_scratch.train import evaluate, get_default_device
+from transformer_from_scratch.train import evaluate, get_default_device, train_loop
+from transformer_from_scratch.transformer import Transformer
 from transformer_from_scratch.types import (
     BatchLogitsTT,
     BatchTokenIndicesTT,
@@ -82,3 +84,54 @@ class TestEvaluate:
         test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=2)
         accuracy = evaluate(model, test_dataloader)
         assert accuracy == 0.0
+
+
+class TestTrainLoop:
+    """Train loop tests."""
+
+    def test_train_loop_executes(self, tmpdir):
+        """Test that the train loop runs without error."""
+        model = Transformer()
+        inputs: BatchTokenIndicesTT = torch.tensor(
+            [[3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3]]
+        )
+        dataset = MyDataset(inputs)
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=2)
+        checkpoint_dir = Path(tmpdir)
+        train_loop(
+            model,
+            dataloader,
+            dataloader,
+            epochs=1,
+            checkpoint_dir=checkpoint_dir,
+            device=torch.device("cpu"),
+        )
+
+    def test_model_parameters_change(self, tmpdir):
+        """Test that model parameters change after training."""
+        model = Transformer()
+        inputs: BatchTokenIndicesTT = torch.tensor(
+            [[3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3]]
+        )
+        dataset = MyDataset(inputs)
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=2)
+        checkpoint_dir = Path(tmpdir)
+
+        # Get initial model parameters
+        initial_params = [param.clone() for param in model.parameters()]
+
+        # Train
+        train_loop(
+            model,
+            dataloader,
+            dataloader,
+            epochs=1,
+            checkpoint_dir=checkpoint_dir,
+            device=torch.device("cpu"),
+        )
+
+        # Check if parameters have changed
+        for param, initial in zip(model.parameters(), initial_params):
+            assert not torch.equal(
+                param, initial
+            ), "Model parameter did not change during training"

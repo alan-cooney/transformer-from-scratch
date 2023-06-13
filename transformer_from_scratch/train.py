@@ -61,7 +61,6 @@ def evaluate(
             _, predicted = torch.max(outputs.data, -1)
             total += labels.numel()
             correct += (predicted == labels).sum().item()
-            print(correct, total, "hi")
 
     return correct / total
 
@@ -74,7 +73,6 @@ def train_loop(
     checkpoint_dir: Path = Path(".checkpoints"),
     device=get_default_device(),
     max_batches: Optional[int] = None,
-    optimizer: Optimizer = optim.Adam,
 ) -> None:
     """Train loop
 
@@ -87,7 +85,6 @@ def train_loop(
         device (torch.device): Device to use for training. Defaults to GPU if available, else CPU.
         max_batches (Optional[int]): Maximum number of batches to process. Defaults to None, which
             processes all batches in the dataloader.
-        optimizer (Optimizer): Optimizer used for training. Defaults to Adam optimizer.
     """
     # Initialise training
     model.to(device)
@@ -95,7 +92,7 @@ def train_loop(
     # Note that the paper also uses a warmup period of 4000 steps (which has not
     # been done here)
     # , betas=(0.9, 0.98), eps=1e-9)
-    optimizer_initialized = optimizer(model.parameters(), lr=1e-3)
+    optimizer_initialized = optim.Adam(model.parameters(), lr=1e-3)
 
     # Create the checkpoint directory
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
