@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Optional
 
 import torch
-import torch.nn as nn
 import wandb
 from jaxtyping import Int
 from torch import Tensor, optim, save
