@@ -31,7 +31,7 @@ nvidia-cuda-nvrtc-cu11 = { version = "11.7.99", platform = 'linux' }
 nvidia-cuda-runtime-cu11 = { version = "11.7.99", platform = 'linux' }
 nvidia-cudnn-cu11 = { version = "8.5.0.96", platform = 'linux' }
 nvidia-cufft-cu11 = { version = "10.9.0.58", platform = 'linux' }
-nvidia-curand-cu11 = { version = "10.2.10.91", platform = 'linux' }
+nvidia-curand-cu11 = { version = "10.3.0.86", platform = 'linux' }
 nvidia-cusolver-cu11 = { version = "11.4.0.1", platform = 'linux' }
 nvidia-cusparse-cu11 = { version = "11.7.4.91", platform = 'linux' }
 nvidia-nccl-cu11 = { version = "2.14.3", platform = 'linux' }
