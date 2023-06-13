@@ -6,6 +6,7 @@ import torch
 import wandb
 from jaxtyping import Int
 from torch import Tensor, optim, save
+from torch.nn import Module
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -34,7 +35,7 @@ def get_default_device() -> torch.device:
 
 
 def evaluate(
-    model: nn.Module,
+    model: Module,
     test_dataloader: DataLoader,
     device: torch.device = torch.device("cpu"),
 ) -> float:
