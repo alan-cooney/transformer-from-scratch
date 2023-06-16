@@ -91,7 +91,10 @@ def train_loop(
     # Note that the paper also uses a warmup period of 4000 steps (which has not
     # been done here)
     # , betas=(0.9, 0.98), eps=1e-9)
-    optimizer_initialized = optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = optim.Adam(model.parameters(), betas=(0.9, 0.98), eps=1e-9)
+    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, 
+                                              lr_lambda=lambda step: 768 * min((step + 1) ** -0.5, (step + 1) * 4000 ** -1.5))
+
 
     # Create the checkpoint directory
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
@@ -109,35 +112,40 @@ def train_loop(
         # Loop over batches
         with tqdm(
             enumerate(train_dataloader),
-            desc="Batches",
+            desc="Steps",
             total=len(train_dataloader),
             position=1,
         ) as tracked_batches:
-            for batch_index, batch in tracked_batches:
+            for step, batch in tracked_batches:
                 # Check not over max_batches
-                if max_batches and batch_index >= max_batches:
+                if max_batches and step >= max_batches:
                     break
 
                 # Move inputs to the device
                 inputs: BatchTokenIndicesTT = batch["input_ids"].to(device)
 
                 # Forward pass
-                optimizer_initialized.zero_grad()
+                optimizer.zero_grad()
                 logits: BatchLogitsTT = model(inputs)
                 loss = cross_entropy_loss(inputs, logits)
 
                 # Backward pass
                 loss.backward()
-                optimizer_initialized.step()
+                optimizer.step()
 
                 # Add loss to tqdm console output
-                if batch_index % 10 == 0:
+                if step % 10 == 0:
                     tracked_batches.set_postfix(loss=loss.item())
 
                 # Log to Wandb
-                if batch_index % 10 == 0 and wandb.run is not None:
+                if step % 10 == 0 and wandb.run is not None:
                     wandb.log(
-                        {"epoch": epoch, "batch": batch_index, "loss": loss.item()},
+                        {
+                            "epoch": epoch, 
+                            "loss": loss.item(), 
+                            "lr": scheduler.get_last_lr()[0]
+                        },
+                        step
                     )
 
         # Evaluate & log this (accuracy)
