@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Dict, List
 
 from datasets import Dataset, load_dataset, load_from_disk
-from datasets.dataset_dict import DatasetDict
 from jaxtyping import Float
 from torch import Tensor
 from torch.utils.data import DataLoader, random_split
@@ -94,6 +93,11 @@ def create_dataloader(dataset: Dataset, batch_size: int) -> DataLoader:
 
 
 def train_shakespeare(batch_size: int = 16) -> None:
+    """Train a transformer on the Shakespeare dataset
+
+    Args:
+        batch_size (int, optional): Batch size.
+    """
     dataset = create_dataset()
     train_dataset, test_dataset = random_split(dataset, [0.9, 0.1])
     train_dataloader = create_dataloader(train_dataset, batch_size)
