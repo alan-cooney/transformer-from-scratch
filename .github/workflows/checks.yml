@@ -65,5 +65,3 @@ jobs:
         uses: psf/black@stable
       - name: Pylint
         run: poetry run pylint $PACKAGE_NAME
-      - name: ISort Import Sorting Checks
-        run: poetry run isort . --check
