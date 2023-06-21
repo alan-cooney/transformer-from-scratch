@@ -2,6 +2,7 @@
     "cSpell.words": [
         "endoftext",
         "jaxtyping",
+        "tqdm",
         "wandb"
     ],
     "python.formatting.provider": "none",

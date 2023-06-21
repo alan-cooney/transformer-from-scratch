@@ -95,7 +95,7 @@ def create_dataloader(dataset: Dataset, batch_size: int) -> DataLoader:
     return DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
 
-def train_shakespeare(batch_size: int = 4) -> None:
+def train_shakespeare(batch_size: int = 12) -> None:
     """Train a transformer on the Shakespeare dataset
 
     Args:
@@ -115,7 +115,6 @@ def train_shakespeare(batch_size: int = 4) -> None:
         model,
         train_dataloader,
         test_dataloader,
-        5,
     )
 
 
