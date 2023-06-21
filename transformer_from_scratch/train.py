@@ -66,28 +66,6 @@ def evaluate(
     return correct / total
 
 
-# def learning_rate_scheduler(step: int, d_model: int) -> float:
-#     """Learning rate scheduler
-
-#     Args:
-#         step (int): Step (0-indexed).
-#         d_model (int): Number of residual stream features per token.
-
-#     Returns:
-#         float: Learning rate
-#     """
-#     warmup_steps = 1000  # Reduced from 4000 in the paper as our batches are larger
-
-#     # GPT-1 scheduler
-#     lr_max = 2.5e-4  # Not explicitly stated
-#     if step < warmup_steps:
-#         return lr_max * (step + 1) / warmup_steps
-#     return lr_max / math.sqrt(step + 1)
-
-#     # Attention is all you need scheduler (*0.1)
-#     # return d_model * min((step + 1) ** (-0.5), (step + 1) * warmup_steps ** (-1.5))
-
-
 def learning_rate_scheduler(
     step: int, total_steps: int, max_lr: float = 1e-3, warmup_steps: int = 1000
 ) -> float:
@@ -118,6 +96,7 @@ def learning_rate_scheduler(
 
 
 def create_lr_lambda(epoch, total_steps):
+    """Create a learning rate lambda function for a given epoch."""
     return lambda step: learning_rate_scheduler(step * (epoch + 1), total_steps)
 
 
@@ -156,7 +135,7 @@ def train_loop(
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     latest_checkpoint = checkpoint_dir / "model_latest.pt"
 
-    # Load model parameters if already check pointed
+    # Load model parameters if already check pointed (note we still start the learning schedule from scratch)
     if latest_checkpoint.exists():
         model.load_state_dict(torch.load(latest_checkpoint))
 
@@ -215,11 +194,17 @@ def train_loop(
                 # Every x steps, save a checkpoint
                 if step % 1000 == 0 and step > 0:
                     torch_save(model.state_dict(), checkpoint_dir / f"model_{step}.pt")
-                    # torch_save(model.state_dict(), latest_checkpoint)
+                    torch_save(model.state_dict(), latest_checkpoint)
 
             # Evaluate each epoch
             model.eval()
             test_accuracy = evaluate(model, test_dataloader, device)
             if wandb.run is not None:
-                wandb.log({"epoch": epoch, "test_accuracy": test_accuracy}, step)
+                wandb.log(
+                    {"epoch": epoch, "test_accuracy": test_accuracy},
+                    len(train_dataloader) * epoch,
+                )
             model.train()
+
+        # Save final model
+        torch_save(model.state_dict(), latest_checkpoint)

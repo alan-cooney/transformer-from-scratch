@@ -4,8 +4,6 @@ from pathlib import Path
 from typing import Dict, List
 
 from datasets import Dataset, load_dataset, load_from_disk
-from jaxtyping import Float
-from torch import Tensor
 from torch.utils.data import DataLoader, random_split
 from transformers import GPTNeoXTokenizerFast
 
