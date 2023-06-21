@@ -69,7 +69,7 @@ def learning_rate_scheduler(step: int, d_model: int) -> float:
     """Learning rate scheduler
 
     Args:
-        step (int): Step.
+        step (int): Step (0-indexed).
         d_model (int): Number of residual stream features per token.
 
     Returns:
@@ -106,7 +106,12 @@ def train_loop(
     # Note that the paper also uses a warmup period of 4000 steps (which has not
     # been done here)
     # , betas=(0.9, 0.98), eps=1e-9)
-    optimizer = optim.Adam(model.parameters(), betas=(0.9, 0.98), eps=1e-9)
+    optimizer = optim.Adam(
+        model.parameters(),
+        betas=(0.9, 0.98),
+        eps=1e-9,
+        lr=learning_rate_scheduler(0, model.d_model),
+    )
     d_model = model.d_model  # Residual stream dimensions
     scheduler = torch.optim.lr_scheduler.LambdaLR(
         optimizer,
@@ -149,7 +154,7 @@ def train_loop(
                 # Backward pass
                 loss.backward()
                 optimizer.step()
-                scheduler.step()
+                # scheduler.step()
 
                 # Add loss & lr to tqdm console output
                 if step % 10 == 0:
