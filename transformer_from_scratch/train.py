@@ -1,4 +1,5 @@
 """Training Utilities."""
+import math
 from pathlib import Path
 from typing import Optional
 
@@ -65,18 +66,59 @@ def evaluate(
     return correct / total
 
 
-def learning_rate_scheduler(step: int, d_model: int) -> float:
-    """Learning rate scheduler
+# def learning_rate_scheduler(step: int, d_model: int) -> float:
+#     """Learning rate scheduler
+
+#     Args:
+#         step (int): Step (0-indexed).
+#         d_model (int): Number of residual stream features per token.
+
+#     Returns:
+#         float: Learning rate
+#     """
+#     warmup_steps = 1000  # Reduced from 4000 in the paper as our batches are larger
+
+#     # GPT-1 scheduler
+#     lr_max = 2.5e-4  # Not explicitly stated
+#     if step < warmup_steps:
+#         return lr_max * (step + 1) / warmup_steps
+#     return lr_max / math.sqrt(step + 1)
+
+#     # Attention is all you need scheduler (*0.1)
+#     # return d_model * min((step + 1) ** (-0.5), (step + 1) * warmup_steps ** (-1.5))
+
+
+def learning_rate_scheduler(
+    step: int, total_steps: int, max_lr: float = 1e-3, warmup_steps: int = 1000
+) -> float:
+    """Learning rate scheduler (GPT 1)
 
     Args:
-        step (int): Step (0-indexed).
-        d_model (int): Number of residual stream features per token.
+        step (int): Current step (0-indexed).
+        total_steps (int): Total number of steps in the training.
+        max_lr (float, optional): Maximum learning rate.
+        warmup_steps (int, optional): Number of warmup steps.
 
     Returns:
-        float: Learning rate
+        float: Learning rate for the current step
     """
-    warmup_steps = 4000
-    return d_model * min((step + 1) ** (-0.5), (step + 1) * warmup_steps ** (-1.5))
+    if step < warmup_steps:
+        return max_lr * step / warmup_steps
+    else:
+        return (
+            max_lr
+            * 0.5
+            * (
+                1
+                + math.cos(
+                    math.pi * (step - warmup_steps) / (total_steps - warmup_steps)
+                )
+            )
+        )
+
+
+def create_lr_lambda(epoch, total_steps):
+    return lambda step: learning_rate_scheduler(step * (epoch + 1), total_steps)
 
 
 def train_loop(
@@ -103,19 +145,11 @@ def train_loop(
     # Initialise training
     model.to(device)
 
-    # Note that the paper also uses a warmup period of 4000 steps (which has not
-    # been done here)
-    # , betas=(0.9, 0.98), eps=1e-9)
+    # Setup the optimizer (using GPT-1 defaults as our model is similar)
     optimizer = optim.Adam(
         model.parameters(),
         betas=(0.9, 0.98),
         eps=1e-9,
-        lr=learning_rate_scheduler(0, model.d_model),
-    )
-    d_model = model.d_model  # Residual stream dimensions
-    scheduler = torch.optim.lr_scheduler.LambdaLR(
-        optimizer,
-        lr_lambda=lambda step: learning_rate_scheduler(step, d_model),
     )
 
     # Create the checkpoint directory
@@ -128,6 +162,12 @@ def train_loop(
 
     # Loop over epochs
     for epoch in tqdm(range(epochs), desc="Epochs", position=0):
+        # Setup the learning rate scheduler
+        total_steps = len(train_dataloader) * epochs
+        scheduler = torch.optim.lr_scheduler.LambdaLR(
+            optimizer, lr_lambda=create_lr_lambda(epoch, total_steps)
+        )
+
         # Set to training mode
         model.train()
 
@@ -154,12 +194,12 @@ def train_loop(
                 # Backward pass
                 loss.backward()
                 optimizer.step()
-                # scheduler.step()
+                scheduler.step()
 
                 # Add loss & lr to tqdm console output
-                if step % 10 == 0:
-                    tracked_batches.set_postfix(loss=loss.item())
-                    tracked_batches.set_postfix(lr=scheduler.get_last_lr()[0])
+                tracked_batches.set_postfix(
+                    {"loss": loss.item(), "lr": scheduler.get_last_lr()[0]}
+                )
 
                 # Log to Wandb
                 if step % 10 == 0 and wandb.run is not None:
@@ -172,18 +212,14 @@ def train_loop(
                         step,
                     )
 
-                # Every 500 steps, evaluate & log this (accuracy)
-                # if step % 500 == 0:
-                #     model.eval()
-                #     test_accuracy = evaluate(model, test_dataloader, device)
-                #     if wandb.run is not None:
-                #         wandb.log(
-                #             {"epoch": epoch, "test_accuracy": test_accuracy},
-                #             step
-                #         )
-                #     model.train()
-
                 # Every x steps, save a checkpoint
-                if step % 5000 == 0 and step > 0:
+                if step % 1000 == 0 and step > 0:
                     torch_save(model.state_dict(), checkpoint_dir / f"model_{step}.pt")
                     # torch_save(model.state_dict(), latest_checkpoint)
+
+            # Evaluate each epoch
+            model.eval()
+            test_accuracy = evaluate(model, test_dataloader, device)
+            if wandb.run is not None:
+                wandb.log({"epoch": epoch, "test_accuracy": test_accuracy}, step)
+            model.train()
