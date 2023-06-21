@@ -51,6 +51,7 @@ def evaluate(
         float: Accuracy (portion of tokens that are correctly predicted)
     """
     total, correct = 0, 0
+    
     with torch.no_grad():
         for batch in test_dataloader:
             inputs: BatchTokenIndicesTT = batch["input_ids"].to(device)
@@ -92,9 +93,9 @@ def train_loop(
     # been done here)
     # , betas=(0.9, 0.98), eps=1e-9)
     optimizer = optim.Adam(model.parameters(), betas=(0.9, 0.98), eps=1e-9)
+    d_model = model.d_model # Residual stream dimensions
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, 
-                                              lr_lambda=lambda step: 768 * min((step + 1) ** -0.5, (step + 1) * 4000 ** -1.5))
-
+                                              lr_lambda=lambda step: d_model * min((step + 1) ** -0.5, (step + 1) * 4000 ** -1.5))
 
     # Create the checkpoint directory
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
@@ -132,10 +133,12 @@ def train_loop(
                 # Backward pass
                 loss.backward()
                 optimizer.step()
+                scheduler.step()
 
-                # Add loss to tqdm console output
+                # Add loss & lr to tqdm console output
                 if step % 10 == 0:
                     tracked_batches.set_postfix(loss=loss.item())
+                    tracked_batches.set_postfix(lr=scheduler.get_last_lr()[0])
 
                 # Log to Wandb
                 if step % 10 == 0 and wandb.run is not None:
@@ -147,15 +150,20 @@ def train_loop(
                         },
                         step
                     )
+                
+                # Every 500 steps, evaluate & log this (accuracy)
+                # if step % 500 == 0:
+                #     model.eval()
+                #     test_accuracy = evaluate(model, test_dataloader, device)
+                #     if wandb.run is not None:
+                #         wandb.log(
+                #             {"epoch": epoch, "test_accuracy": test_accuracy},
+                #             step
+                #         )
+                #     model.train()
+                    
+                # Every 1000 steps, save a checkpoint
+                if step % 1000 == 0:
+                    torch_save(model.state_dict(), checkpoint_dir / f"model_{step}.pt")
+                    torch_save(model.state_dict(), latest_checkpoint)
 
-        # Evaluate & log this (accuracy)
-        model.eval()
-        test_accuracy = evaluate(model, test_dataloader, device)
-        if wandb.run is not None:
-            wandb.log(
-                {"epoch": epoch, "test_accuracy": test_accuracy},
-            )
-
-        # Save model parameters
-        torch_save(model.state_dict(), checkpoint_dir / f"model_{epoch}.pt")
-        torch_save(model.state_dict(), latest_checkpoint)
