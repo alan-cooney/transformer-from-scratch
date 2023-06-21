@@ -4,7 +4,12 @@ from typing import Dict
 import torch
 from torch.utils.data import Dataset
 
-from transformer_from_scratch.train import evaluate, get_default_device, train_loop
+from transformer_from_scratch.train import (
+    evaluate,
+    get_default_device,
+    learning_rate_scheduler,
+    train_loop,
+)
 from transformer_from_scratch.transformer import Transformer
 from transformer_from_scratch.types import (
     BatchLogitsTT,
@@ -85,6 +90,27 @@ class TestEvaluate:
         test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=2)
         accuracy = evaluate(model, test_dataloader)
         assert accuracy == 0.0
+
+
+class TestLearningRateScheduler:
+    """Learning rate scheduler tests."""
+
+    def test_learning_rate_scheduler_step_10(self):
+        """Test the learning rate scheduler gives the correct result for step 10."""
+        d_model = 512
+        step = 9  # 0-indexed
+        warmup_steps = 4000
+        expected = 512 * (step + 1) * warmup_steps ** (-1.5)
+        learning_rate = learning_rate_scheduler(step, d_model)
+        assert learning_rate == expected
+
+    def test_learning_rate_scheduler_step_100000(self):
+        """Test the learning rate scheduler gives the correct result for step 100000."""
+        d_model = 512
+        step = 100000 - 1  # 0-indexed
+        expected = 512 * (step + 1) ** (-0.5)
+        learning_rate = learning_rate_scheduler(step, d_model)
+        assert learning_rate == expected
 
 
 class TestTrainLoop:

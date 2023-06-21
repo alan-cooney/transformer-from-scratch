@@ -51,7 +51,7 @@ def evaluate(
         float: Accuracy (portion of tokens that are correctly predicted)
     """
     total, correct = 0, 0
-    
+
     with torch.no_grad():
         for batch in test_dataloader:
             inputs: BatchTokenIndicesTT = batch["input_ids"].to(device)
@@ -63,6 +63,20 @@ def evaluate(
             correct += (predicted == labels).sum().item()
 
     return correct / total
+
+
+def learning_rate_scheduler(step: int, d_model: int) -> float:
+    """Learning rate scheduler
+
+    Args:
+        step (int): Step.
+        d_model (int): Number of residual stream features per token.
+
+    Returns:
+        float: Learning rate
+    """
+    warmup_steps = 4000
+    return d_model * min((step + 1) ** (-0.5), (step + 1) * warmup_steps ** (-1.5))
 
 
 def train_loop(
@@ -93,9 +107,11 @@ def train_loop(
     # been done here)
     # , betas=(0.9, 0.98), eps=1e-9)
     optimizer = optim.Adam(model.parameters(), betas=(0.9, 0.98), eps=1e-9)
-    d_model = model.d_model # Residual stream dimensions
-    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, 
-                                              lr_lambda=lambda step: d_model * min((step + 1) ** -0.5, (step + 1) * 4000 ** -1.5))
+    d_model = model.d_model  # Residual stream dimensions
+    scheduler = torch.optim.lr_scheduler.LambdaLR(
+        optimizer,
+        lr_lambda=lambda step: learning_rate_scheduler(step, d_model),
+    )
 
     # Create the checkpoint directory
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
@@ -144,13 +160,13 @@ def train_loop(
                 if step % 10 == 0 and wandb.run is not None:
                     wandb.log(
                         {
-                            "epoch": epoch, 
-                            "loss": loss.item(), 
-                            "lr": scheduler.get_last_lr()[0]
+                            "epoch": epoch,
+                            "loss": loss.item(),
+                            "lr": scheduler.get_last_lr()[0],
                         },
-                        step
+                        step,
                     )
-                
+
                 # Every 500 steps, evaluate & log this (accuracy)
                 # if step % 500 == 0:
                 #     model.eval()
@@ -161,9 +177,8 @@ def train_loop(
                 #             step
                 #         )
                 #     model.train()
-                    
-                # Every 1000 steps, save a checkpoint
-                if step % 1000 == 0:
-                    torch_save(model.state_dict(), checkpoint_dir / f"model_{step}.pt")
-                    torch_save(model.state_dict(), latest_checkpoint)
 
+                # Every x steps, save a checkpoint
+                if step % 5000 == 0 and step > 0:
+                    torch_save(model.state_dict(), checkpoint_dir / f"model_{step}.pt")
+                    # torch_save(model.state_dict(), latest_checkpoint)

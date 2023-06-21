@@ -60,6 +60,9 @@ class Transformer(nn.Module):
                 )
             )
 
+        # Config
+        self.d_model = d_model
+
     def forward(self, tokens: BatchTokenIndicesTT) -> BatchLogitsTT:
         """Forward pass.
 

@@ -1,3 +1,4 @@
+"""Shakespeare example."""
 import urllib
 from pathlib import Path
 from typing import Dict, List
@@ -11,16 +12,18 @@ from transformers import GPTNeoXTokenizerFast
 import wandb
 from transformer_from_scratch.train import train_loop
 from transformer_from_scratch.transformer import Transformer
+from transformer_from_scratch.types import BatchTokenIndicesTT
 
 
 def create_tokenizer() -> GPTNeoXTokenizerFast:
+    """Create the tokenizer."""
     return GPTNeoXTokenizerFast.from_pretrained("gpt2", pad_token="<|endoftext|>")
 
 
 def tokenize_prompt(
     text: List[str],
     tokenizer: GPTNeoXTokenizerFast,
-) -> Dict[str, Float[Tensor, "mapping_batch_item pos"]]:
+) -> Dict[str, BatchTokenIndicesTT]:
     """Tokenize a prompt
 
     Designed to be used by a dataset mapping function, so it returns a dict with
@@ -58,7 +61,7 @@ def create_dataset(
     # Return the dataset from disk if it already exists
     dataset_path = data_dir / "shakespeare_dataset"
     if dataset_path.exists() and load_if_exists:
-        return load_from_disk(dataset_path)['train']
+        return load_from_disk(dataset_path)["train"]
 
     # Download text file
     data_dir.mkdir(parents=True, exist_ok=True)
@@ -79,7 +82,7 @@ def create_dataset(
 
     # Save the dataset
     dataset.save_to_disk(dataset_path)
-    return dataset['train']
+    return dataset["train"]
 
 
 def create_dataloader(dataset: Dataset, batch_size: int) -> DataLoader:

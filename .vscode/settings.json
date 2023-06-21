@@ -1,0 +1,12 @@
+{
+    "cSpell.words": [
+        "endoftext",
+        "jaxtyping",
+        "wandb"
+    ],
+    "python.formatting.provider": "none",
+    "editor.formatOnSave": true,
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    }
+}
