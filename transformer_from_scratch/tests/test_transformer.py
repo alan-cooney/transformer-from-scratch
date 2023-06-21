@@ -72,3 +72,46 @@ def test_transformer_forward(d_head, d_hidden, d_model, d_vocab, max_tokens, n_l
 
     assert isinstance(logits, torch.Tensor)
     assert logits.shape == (batch_size, seq_len, d_vocab)
+
+
+def test_transformer_memorize_dataset():
+    """Check the transformer can learn to memorize a simple dataset."""
+    # Create a simple dataset
+    d_vocab = 10
+    dataset = torch.randint(low=0, high=d_vocab, size=(10, 10))
+
+    # Create an instance of the Transformer
+    transformer = Transformer(
+        d_head=4,
+        d_hidden=32,
+        d_model=16,
+        d_vocab=d_vocab,
+        max_tokens=10,
+        n_layers=2,
+    )
+
+    # Create a simple optimizer
+    optimizer = torch.optim.Adam(transformer.parameters(), lr=1e-3)
+
+    # Train the Transformer
+    for _ in range(1000):
+        # Reset the gradients
+        optimizer.zero_grad()
+
+        # Run a forward pass
+        logits = transformer(dataset)
+
+        # Compute the loss
+        loss = torch.nn.functional.cross_entropy(
+            input=logits.reshape(-1, d_vocab),
+            target=dataset.reshape(-1),
+        )
+
+        # Compute the gradients
+        loss.backward()
+
+        # Update the weights
+        optimizer.step()
+
+    # Check that the loss is low
+    assert loss < 1e-2
