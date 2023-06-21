@@ -99,7 +99,10 @@ def train_shakespeare(batch_size: int = 4) -> None:
         batch_size (int, optional): Batch size.
     """
     dataset = create_dataset()
-    train_dataset, test_dataset = random_split(dataset, [0.95, 0.05])
+    total_len = len(dataset)
+    test_len = 50
+    train_len = total_len - test_len
+    train_dataset, test_dataset = random_split(dataset, [train_len, test_len])
     train_dataloader = create_dataloader(train_dataset, batch_size)
     test_dataloader = create_dataloader(test_dataset, batch_size)
 
