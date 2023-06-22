@@ -35,8 +35,6 @@ def test_create_dataloader_random_sorting():
     torch.manual_seed(2)
     dataloader2 = create_dataloader(dataset, 4)
 
-    print(next(iter(dataloader1)))
-
     # Get the first prompt from each dataloader
     first_prompt1 = next(iter(dataloader1))["input_ids"][0]
     first_prompt2 = next(iter(dataloader2))["input_ids"][0]
