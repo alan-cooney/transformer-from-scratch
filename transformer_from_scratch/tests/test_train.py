@@ -36,6 +36,7 @@ class SimpleModel(torch.nn.Module):
             BatchLogitsTT: 100% log probabilities of the specified output token index, for all positions in all batches.
         """
         output_indices = torch.fill(inputs, self.output_indices)
+
         return torch.nn.functional.one_hot(
             output_indices, num_classes=self.vocab_size
         ).float()
@@ -73,7 +74,7 @@ class TestEvaluate:
         """Test that a model that always outputs the correct token index, gets 100% accuracy."""
         model = SimpleModel(output_indices=3, vocab_size=10)
         inputs: BatchTokenIndicesTT = torch.tensor(
-            [[3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3]]
+            [[1, 3, 3], [7, 3, 3], [2, 3, 3], [4, 3, 3]]
         )
         test_dataset = MyDataset(inputs)
         test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=2)
@@ -81,10 +82,10 @@ class TestEvaluate:
         assert accuracy == 1.0
 
     def test_fully_inaccurate_model(self):
-        """Test that a model that always outputs the incorrect token index, gets 100% accuracy."""
+        """Test that a model that always outputs the incorrect token index, gets 0% accuracy."""
         model = SimpleModel(output_indices=2, vocab_size=10)
         inputs: BatchTokenIndicesTT = torch.tensor(
-            [[3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3]]
+            [[1, 3, 3], [7, 3, 3], [2, 3, 3], [4, 3, 3]]
         )
         test_dataset = MyDataset(inputs)
         test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=2)

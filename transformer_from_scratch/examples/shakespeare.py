@@ -1,12 +1,14 @@
 """Shakespeare example."""
+import re
 import urllib
 from pathlib import Path
 from typing import Dict, List
 
+import torch
 from datasets import Dataset
 from torch.utils.data import DataLoader, random_split
 from transformers import GPTNeoXTokenizerFast
-import torch
+
 import wandb
 from transformer_from_scratch.train import train_loop
 from transformer_from_scratch.transformer import Transformer
@@ -52,6 +54,13 @@ def create_dataset(
     tokenizer = create_tokenizer()
     with open(data_path, "r", encoding="utf-8") as file:
         text = file.read()
+
+    # Replace multiple newline characters with a single newline character
+    text = re.sub(r"\n+", "\n", text)
+
+    # Replace multiple spaces with a single space
+    text = re.sub(r" +", " ", text)
+
     tokens = tokenizer.encode(text, truncation=False)
 
     # Split into chunks of max_length

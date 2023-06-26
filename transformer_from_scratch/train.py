@@ -70,8 +70,8 @@ def evaluate(
 
 def learning_rate_scheduler(
     step: int,
-    multiplier_factor: float = 0.05,
-    warmup_steps: int = 1000,
+    multiplier_factor: float = 1,
+    warmup_steps: int = 100,
     d_model: int = 768,
 ) -> float:
     """Learning rate scheduler (GPT 1)
@@ -121,8 +121,8 @@ def train_loop(
         model.parameters(),
         betas=(0.9, 0.98),
         eps=1e-9,
-        lr=1e-5,
-        # weight_decay=1e-2,
+        lr=1,
+        # weight_decay=1e-3,
     )
 
     # Create the checkpoint directory
@@ -143,10 +143,10 @@ def train_loop(
     ) as training_epochs:
         for epoch in training_epochs:
             # Setup the learning rate scheduler
-            # scheduler = torch.optim.lr_scheduler.LambdaLR(
-            #     optimizer,
-            #     lr_lambda=lambda step: learning_rate_scheduler(step + 1),
-            # )
+            scheduler = torch.optim.lr_scheduler.LambdaLR(
+                optimizer,
+                lr_lambda=lambda step: learning_rate_scheduler(step + 1),
+            )
 
             # Set to training mode
             model.train()
@@ -174,7 +174,7 @@ def train_loop(
                     # Backward pass
                     loss.backward()
                     optimizer.step()
-                    # scheduler.step()
+                    scheduler.step()
 
                     # Log
                     tracked_batches.set_postfix(
