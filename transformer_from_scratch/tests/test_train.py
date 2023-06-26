@@ -49,7 +49,7 @@ class MyDataset(Dataset):
         self.inputs: BatchTokenIndicesTT = inputs
 
     def __getitem__(self, index) -> Dict[str, TokenIndicesTT]:
-        return {"input_ids": self.inputs[index]}
+        return self.inputs[index]
 
     def __len__(self):
         return len(self.inputs)

@@ -55,7 +55,7 @@ def evaluate(
 
     with torch.no_grad():
         for batch in test_dataloader:
-            inputs: BatchTokenIndicesTT = batch["input_ids"].to(device)
+            inputs: BatchTokenIndicesTT = batch.to(device)
             inputs_except_last: BatchTargetIndicesTT = inputs[:, :-1]
             labels: BatchTargetIndicesTT = inputs[:, 1:]
             outputs = model(inputs_except_last)
@@ -63,11 +63,16 @@ def evaluate(
             total += labels.numel()
             correct += (predicted == labels).sum().item()
 
+    print("Total: ", total, " Correct: ", correct)
+
     return correct / total
 
 
 def learning_rate_scheduler(
-    step: int, total_steps: int, max_lr: float = 1e-3, warmup_steps: int = 1000
+    step: int,
+    multiplier_factor: float = 0.05,
+    warmup_steps: int = 1000,
+    d_model: int = 768,
 ) -> float:
     """Learning rate scheduler (GPT 1)
 
@@ -80,24 +85,11 @@ def learning_rate_scheduler(
     Returns:
         float: Learning rate for the current step
     """
-    if step < warmup_steps:
-        return max_lr * step / warmup_steps
-    else:
-        return (
-            max_lr
-            * 0.5
-            * (
-                1
-                + math.cos(
-                    math.pi * (step - warmup_steps) / (total_steps - warmup_steps)
-                )
-            )
-        )
-
-
-def create_lr_lambda(epoch, total_steps):
-    """Create a learning rate lambda function for a given epoch."""
-    return lambda step: learning_rate_scheduler(step * (epoch + 1), total_steps)
+    return (
+        multiplier_factor
+        * (d_model**-0.5)
+        * min(step ** (-0.5), step * (warmup_steps ** (-1.5)))
+    )
 
 
 def train_loop(
@@ -129,6 +121,8 @@ def train_loop(
         model.parameters(),
         betas=(0.9, 0.98),
         eps=1e-9,
+        lr=1e-5,
+        # weight_decay=1e-2,
     )
 
     # Create the checkpoint directory
@@ -136,75 +130,93 @@ def train_loop(
     latest_checkpoint = checkpoint_dir / "model_latest.pt"
 
     # Load model parameters if already check pointed (note we still start the learning schedule from scratch)
-    if latest_checkpoint.exists():
-        model.load_state_dict(torch.load(latest_checkpoint))
+    # if latest_checkpoint.exists():
+    #     model.load_state_dict(torch.load(latest_checkpoint))
 
     # Loop over epochs
-    for epoch in tqdm(range(epochs), desc="Epochs", position=0):
-        # Setup the learning rate scheduler
-        total_steps = len(train_dataloader) * epochs
-        scheduler = torch.optim.lr_scheduler.LambdaLR(
-            optimizer, lr_lambda=create_lr_lambda(epoch, total_steps)
-        )
+    with tqdm(
+        range(epochs),
+        desc="Epochs",
+        total=epochs,
+        position=0,
+        postfix={"test_accuracy": 0},
+    ) as training_epochs:
+        for epoch in training_epochs:
+            # Setup the learning rate scheduler
+            # scheduler = torch.optim.lr_scheduler.LambdaLR(
+            #     optimizer,
+            #     lr_lambda=lambda step: learning_rate_scheduler(step + 1),
+            # )
 
-        # Set to training mode
-        model.train()
-
-        # Loop over batches
-        with tqdm(
-            enumerate(train_dataloader),
-            desc="Steps",
-            total=len(train_dataloader),
-            position=1,
-        ) as tracked_batches:
-            for step, batch in tracked_batches:
-                # Check not over max_batches
-                if max_batches and step >= max_batches:
-                    break
-
-                # Move inputs to the device
-                inputs: BatchTokenIndicesTT = batch["input_ids"].to(device)
-
-                # Forward pass
-                optimizer.zero_grad()
-                logits: BatchLogitsTT = model(inputs)
-                loss = cross_entropy_loss(inputs, logits)
-
-                # Backward pass
-                loss.backward()
-                optimizer.step()
-                scheduler.step()
-
-                # Add loss & lr to tqdm console output
-                tracked_batches.set_postfix(
-                    {"loss": loss.item(), "lr": scheduler.get_last_lr()[0]}
-                )
-
-                # Log to Wandb
-                if step % 10 == 0 and wandb.run is not None:
-                    wandb.log(
-                        {
-                            "epoch": epoch,
-                            "loss": loss.item(),
-                            "lr": scheduler.get_last_lr()[0],
-                        },
-                        step,
-                    )
-
-                # Every x steps, save a checkpoint
-                if step % 1000 == 0 and step > 0:
-                    torch_save(model.state_dict(), checkpoint_dir / f"model_{step}.pt")
-                    torch_save(model.state_dict(), latest_checkpoint)
-
-            # Evaluate each epoch
-            model.eval()
-            test_accuracy = evaluate(model, test_dataloader, device)
-            if wandb.run is not None:
-                wandb.log(
-                    {"epoch": epoch, "test_accuracy": test_accuracy},
-                    len(train_dataloader) * epoch,
-                )
+            # Set to training mode
             model.train()
 
-        # Save final model
-        torch_save(model.state_dict(), latest_checkpoint)
+            # Loop over batches
+            with tqdm(
+                enumerate(train_dataloader),
+                desc="Steps",
+                total=len(train_dataloader),
+                position=1,
+            ) as tracked_batches:
+                for step, batch in tracked_batches:
+                    # Check not over max_batches
+                    if max_batches and step >= max_batches:
+                        break
+
+                    # Move inputs to the device
+                    inputs: BatchTokenIndicesTT = batch.to(device)
+
+                    # Forward pass
+                    optimizer.zero_grad()
+                    logits: BatchLogitsTT = model(inputs)
+                    loss = cross_entropy_loss(inputs, logits)
+
+                    # Backward pass
+                    loss.backward()
+                    optimizer.step()
+                    # scheduler.step()
+
+                    # Log
+                    tracked_batches.set_postfix(
+                        {
+                            "loss": loss.item(),
+                            # "lr": scheduler.get_last_lr()[0]
+                        }
+                    )
+                    if step % 10 == 0 and wandb.run is not None:
+                        wandb.log(
+                            {
+                                "epoch": epoch,
+                                "loss": loss.item(),
+                                # "lr": scheduler.get_last_lr()[0],
+                            },
+                            step,
+                        )
+
+                    # Every x steps, save a checkpoint
+                    if step % 1000 == 0 and step > 0:
+                        torch_save(
+                            model.state_dict(), checkpoint_dir / f"model_{step}.pt"
+                        )
+                        torch_save(model.state_dict(), latest_checkpoint)
+
+                # Evaluate each epoch
+                model.eval()
+                test_accuracy = evaluate(model, test_dataloader, device)
+
+                # Log
+                training_epochs.set_postfix(
+                    {
+                        "test_accuracy": test_accuracy,
+                    }
+                )
+                if wandb.run is not None:
+                    wandb.log(
+                        {"epoch": epoch, "test_accuracy": test_accuracy},
+                        len(train_dataloader) * epoch,
+                    )
+
+                model.train()
+
+            # Save final model
+            torch_save(model.state_dict(), latest_checkpoint)
