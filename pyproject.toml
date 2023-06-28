@@ -19,7 +19,7 @@ typeguard = "^4.0.0"
 torchtext = "^0.15.2"
 torchdata = "^0.6.1"
 tqdm = "^4.65.0"
-transformers = "^4.30.1"
+transformers = {extras = ["torch"], version = "^4.30.2"}
 datasets = "^2.12.0"
 wandb = "^0.15.4"
 jaxtyping = "^0.2.20"
@@ -37,6 +37,7 @@ nvidia-cusparse-cu11 = { version = "11.7.4.91", platform = 'linux' }
 nvidia-nccl-cu11 = { version = "2.14.3", platform = 'linux' }
 nvidia-nvtx-cu11 = { version = "11.7.91", platform = 'linux' }
 triton = { version = "2.0.0", platform = 'linux' }
+tensorboard = "^2.13.0"
 
 [tool.poetry.group.dev.dependencies]
 bandit = "^1.7.5"

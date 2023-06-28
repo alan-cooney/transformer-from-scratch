@@ -1,13 +1,4 @@
 {
-    "cSpell.words": [
-        "endoftext",
-        "jaxtyping",
-        "optim",
-        "postprocess",
-        "tqdm",
-        "unsqueeze",
-        "wandb"
-    ],
     "python.formatting.provider": "none",
     "editor.formatOnSave": true,
     "[python]": {
@@ -16,5 +7,8 @@
     "python.testing.pytestArgs": [
         "transformer_from_scratch",
     ],
-    "python.testing.pytestEnabled": true
+    "python.testing.pytestEnabled": true,
+    "rewrap.autoWrap.enabled": true,
+    "rewrap.reformat": true,
+    "rewrap.wrappingColumn": 100
 }
