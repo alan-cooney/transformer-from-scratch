@@ -137,7 +137,9 @@ def train_loop(
                         break
 
                     # Move inputs to the device
-                    inputs: BatchTokenIndicesTT = batch.to(device)
+                    inputs: BatchTokenIndicesTT = torch.stack(
+                        batch["input_ids"], -1
+                    ).to(device)
 
                     # Forward pass
                     optimizer.zero_grad()
