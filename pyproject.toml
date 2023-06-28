@@ -27,7 +27,7 @@ jaxtyping = "^0.2.20"
 # https://github.com/pytorch/pytorch/issues/100974
 nvidia-cublas-cu11 = { version = "11.10.3.66", platform = 'linux' }
 nvidia-cuda-cupti-cu11 = { version = "11.7.101", platform = 'linux' }
-nvidia-cuda-nvrtc-cu11 = { version = "11.7.99", platform = 'linux' }
+nvidia-cuda-nvrtc-cu11 = { version = "11.8.89", platform = 'linux' }
 nvidia-cuda-runtime-cu11 = { version = "11.7.99", platform = 'linux' }
 nvidia-cudnn-cu11 = { version = "8.5.0.96", platform = 'linux' }
 nvidia-cufft-cu11 = { version = "10.9.0.58", platform = 'linux' }
