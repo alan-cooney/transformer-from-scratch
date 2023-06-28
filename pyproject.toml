@@ -26,7 +26,7 @@ jaxtyping = "^0.2.20"
 # Fix for Pytorch/Poetry issue where linux dependencies are not installed
 # https://github.com/pytorch/pytorch/issues/100974
 nvidia-cublas-cu11 = { version = "11.10.3.66", platform = 'linux' }
-nvidia-cuda-cupti-cu11 = { version = "11.7.101", platform = 'linux' }
+nvidia-cuda-cupti-cu11 = { version = "11.8.87", platform = 'linux' }
 nvidia-cuda-nvrtc-cu11 = { version = "11.7.99", platform = 'linux' }
 nvidia-cuda-runtime-cu11 = { version = "11.7.99", platform = 'linux' }
 nvidia-cudnn-cu11 = { version = "8.5.0.96", platform = 'linux' }
