@@ -1,8 +1,6 @@
 """Training Utilities."""
-import math
 from pathlib import Path
 from typing import Optional
-from timm.scheduler import CosineLRScheduler
 import torch
 from jaxtyping import Int
 from torch import Tensor, optim
@@ -76,6 +74,9 @@ def train_loop(
     checkpoint_dir: Path = Path(".checkpoints"),
     device=get_default_device(),
     max_batches: Optional[int] = None,
+    learning_rate: float = 1e-3,
+    weight_decay: float = 1e-2,
+    warmup_steps: int = 1000,
 ) -> None:
     """Train loop
 
@@ -93,12 +94,12 @@ def train_loop(
     model.to(device)
 
     # Setup the optimizer (using GPT-1 defaults as our model is similar)
-    optimizer = optim.Adam(
+    optimizer = optim.AdamW(
         model.parameters(),
-        betas=(0.9, 0.999),
-        eps=1e-8,
-        lr=5e-4,  # Default 5e-5
-        weight_decay=0.1,
+        # betas=(0.9, 0.999),
+        # eps=1e-8,
+        lr=learning_rate,  # HF tutorial uses 5e-4
+        weight_decay=weight_decay,  # HF tutorial uses 0.1
     )
 
     # Create the checkpoint directory
@@ -119,7 +120,10 @@ def train_loop(
     ) as training_epochs:
         for epoch in training_epochs:
             # Setup the learning rate scheduler
-            scheduler = CosineLRScheduler(optimizer=optimizer, t_initial=1000)
+            scheduler = optim.lr_scheduler.LambdaLR(
+                optimizer,
+                lr_lambda=lambda step: min(1.0, step / warmup_steps),
+            )
 
             # Set to training mode
             model.train()
@@ -149,7 +153,7 @@ def train_loop(
                     # Backward pass
                     loss.backward()
                     optimizer.step()
-                    scheduler.step(epoch=epoch)
+                    scheduler.step()
 
                     # Log
                     tracked_batches.set_postfix(
