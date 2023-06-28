@@ -13,3 +13,4 @@ __pycache__/
 
 # Logging
 wandb/
+transformer_from_scratch/examples/.cache
