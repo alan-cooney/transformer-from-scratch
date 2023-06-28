@@ -49,6 +49,7 @@ def get_datasets():
 
 
 def tokenize(element):
+    """Tokenize code."""
     outputs = tokenizer(
         element["content"],
         truncation=True,
@@ -64,6 +65,7 @@ def tokenize(element):
 
 
 def get_tokenized_datasets():
+    """Get the tokenized datasets."""
     raw_datasets = get_datasets()
     current_dir = os.path.dirname(os.path.abspath(__file__))
     cache_dir = os.path.join(current_dir, ".cache")
@@ -82,7 +84,8 @@ def get_tokenized_datasets():
 
 
 def train():
-    wandb.init(project="gpt2-code-comparison", sync_tensorboard=False)
+    """Train."""
+    wandb.init(project="gpt2-code-comparison", sync_tensorboard=True)
     tokenized_datasets = get_tokenized_datasets()
     model = GPT2LMHeadModel(config)
     tokenizer.pad_token = tokenizer.eos_token
