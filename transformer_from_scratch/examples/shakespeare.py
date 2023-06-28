@@ -93,7 +93,7 @@ def create_dataloader(dataset: Dataset, batch_size: int) -> DataLoader:
     )
 
 
-def train_shakespeare(batch_size: int = 12) -> None:
+def train_shakespeare(batch_size: int = 256) -> None:
     """Train a transformer on the Shakespeare dataset
 
     Args:
@@ -113,6 +113,6 @@ def train_shakespeare(batch_size: int = 12) -> None:
 
 
 if __name__ == "__main__":
-    # wandb.login()
-    # wandb.init(project="transformer-from-scratch")
+    wandb.login()
+    wandb.init(project="transformer-from-scratch")
     train_shakespeare()

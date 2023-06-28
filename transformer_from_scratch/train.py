@@ -2,7 +2,7 @@
 import math
 from pathlib import Path
 from typing import Optional
-
+from timm.scheduler import CosineLRScheduler
 import torch
 from jaxtyping import Int
 from torch import Tensor, optim
@@ -68,30 +68,6 @@ def evaluate(
     return correct / total
 
 
-def learning_rate_scheduler(
-    step: int,
-    multiplier_factor: float = 1,
-    warmup_steps: int = 100,
-    d_model: int = 768,
-) -> float:
-    """Learning rate scheduler (GPT 1)
-
-    Args:
-        step (int): Current step (0-indexed).
-        total_steps (int): Total number of steps in the training.
-        max_lr (float, optional): Maximum learning rate.
-        warmup_steps (int, optional): Number of warmup steps.
-
-    Returns:
-        float: Learning rate for the current step
-    """
-    return (
-        multiplier_factor
-        * (d_model**-0.5)
-        * min(step ** (-0.5), step * (warmup_steps ** (-1.5)))
-    )
-
-
 def train_loop(
     model: Transformer,
     train_dataloader: DataLoader,
@@ -119,10 +95,10 @@ def train_loop(
     # Setup the optimizer (using GPT-1 defaults as our model is similar)
     optimizer = optim.Adam(
         model.parameters(),
-        betas=(0.9, 0.98),
-        eps=1e-9,
-        lr=1,
-        # weight_decay=1e-3,
+        betas=(0.9, 0.999),
+        eps=1e-8,
+        lr=5e-4,  # Default 5e-5
+        weight_decay=0.1,
     )
 
     # Create the checkpoint directory
@@ -143,10 +119,7 @@ def train_loop(
     ) as training_epochs:
         for epoch in training_epochs:
             # Setup the learning rate scheduler
-            scheduler = torch.optim.lr_scheduler.LambdaLR(
-                optimizer,
-                lr_lambda=lambda step: learning_rate_scheduler(step + 1),
-            )
+            scheduler = CosineLRScheduler(optimizer=optimizer, t_initial=1000)
 
             # Set to training mode
             model.train()
@@ -174,13 +147,13 @@ def train_loop(
                     # Backward pass
                     loss.backward()
                     optimizer.step()
-                    scheduler.step()
+                    scheduler.step(epoch=epoch)
 
                     # Log
                     tracked_batches.set_postfix(
                         {
-                            "loss": loss.item(),
-                            # "lr": scheduler.get_last_lr()[0]
+                            "loss": loss.item()
+                            # , "lr": scheduler._get_lr(step)
                         }
                     )
                     if step % 10 == 0 and wandb.run is not None:
@@ -188,7 +161,7 @@ def train_loop(
                             {
                                 "epoch": epoch,
                                 "loss": loss.item(),
-                                # "lr": scheduler.get_last_lr()[0],
+                                # "lr": scheduler._get_lr(step),
                             },
                             step,
                         )
