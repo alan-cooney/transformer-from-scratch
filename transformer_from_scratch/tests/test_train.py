@@ -4,7 +4,12 @@ from typing import Dict
 import torch
 from torch.utils.data import Dataset
 
-from transformer_from_scratch.train import evaluate, get_default_device, train_loop
+from transformer_from_scratch.train import (
+    evaluate,
+    get_default_device,
+    learning_rate_scheduler,
+    train_loop,
+)
 from transformer_from_scratch.transformer import Transformer
 from transformer_from_scratch.types import (
     BatchLogitsTT,
@@ -31,6 +36,7 @@ class SimpleModel(torch.nn.Module):
             BatchLogitsTT: 100% log probabilities of the specified output token index, for all positions in all batches.
         """
         output_indices = torch.fill(inputs, self.output_indices)
+
         return torch.nn.functional.one_hot(
             output_indices, num_classes=self.vocab_size
         ).float()
@@ -44,7 +50,7 @@ class MyDataset(Dataset):
         self.inputs: BatchTokenIndicesTT = inputs
 
     def __getitem__(self, index) -> Dict[str, TokenIndicesTT]:
-        return {"input_ids": self.inputs[index]}
+        return self.inputs[index]
 
     def __len__(self):
         return len(self.inputs)
@@ -68,7 +74,7 @@ class TestEvaluate:
         """Test that a model that always outputs the correct token index, gets 100% accuracy."""
         model = SimpleModel(output_indices=3, vocab_size=10)
         inputs: BatchTokenIndicesTT = torch.tensor(
-            [[3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3]]
+            [[1, 3, 3], [7, 3, 3], [2, 3, 3], [4, 3, 3]]
         )
         test_dataset = MyDataset(inputs)
         test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=2)
@@ -76,15 +82,36 @@ class TestEvaluate:
         assert accuracy == 1.0
 
     def test_fully_inaccurate_model(self):
-        """Test that a model that always outputs the incorrect token index, gets 100% accuracy."""
+        """Test that a model that always outputs the incorrect token index, gets 0% accuracy."""
         model = SimpleModel(output_indices=2, vocab_size=10)
         inputs: BatchTokenIndicesTT = torch.tensor(
-            [[3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3]]
+            [[1, 3, 3], [7, 3, 3], [2, 3, 3], [4, 3, 3]]
         )
         test_dataset = MyDataset(inputs)
         test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=2)
         accuracy = evaluate(model, test_dataloader)
         assert accuracy == 0.0
+
+
+class TestLearningRateScheduler:
+    """Learning rate scheduler tests."""
+
+    def test_learning_rate_scheduler_step_10(self):
+        """Test the learning rate scheduler gives the correct result for step 10."""
+        d_model = 512
+        step = 9  # 0-indexed
+        warmup_steps = 4000
+        expected = 512 * (step + 1) * warmup_steps ** (-1.5)
+        learning_rate = learning_rate_scheduler(step, d_model)
+        assert learning_rate == expected
+
+    def test_learning_rate_scheduler_step_100000(self):
+        """Test the learning rate scheduler gives the correct result for step 100000."""
+        d_model = 512
+        step = 100000 - 1  # 0-indexed
+        expected = 512 * (step + 1) ** (-0.5)
+        learning_rate = learning_rate_scheduler(step, d_model)
+        assert learning_rate == expected
 
 
 class TestTrainLoop:
