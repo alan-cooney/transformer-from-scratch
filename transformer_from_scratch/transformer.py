@@ -3,7 +3,9 @@ from torch import nn
 
 from transformer_from_scratch.components.embed_unembed import Embed, Unembed
 from transformer_from_scratch.components.layer import Layer
-from transformer_from_scratch.components.positional_encoding import PositionalEncoding
+from transformer_from_scratch.components.positional_encoding import (
+    SinusoidalPositionalEncoding,
+)
 from transformer_from_scratch.types import (
     BatchLogitsTT,
     BatchResidualStreamTT,
@@ -43,7 +45,7 @@ class Transformer(nn.Module):
         self.unembed = Unembed(d_vocab=d_vocab, d_model=d_model)
 
         # Positional encoding
-        self.positional_encoding = PositionalEncoding(
+        self.positional_encoding = SinusoidalPositionalEncoding(
             d_model=d_model,
             max_tokens=max_tokens,
         )

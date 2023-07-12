@@ -11,7 +11,7 @@ DModelHalfTT = Float[Tensor, f" {D.RESIDUAL_FEATURE_HALF}"]
 PosDModelHalfTT = Float[Tensor, f"{D.POSITION} {D.RESIDUAL_FEATURE_HALF}"]
 
 
-class PositionalEncoding(torch.nn.Module):
+class SinusoidalPositionalEncoding(torch.nn.Module):
     """Positional Encoding Module.
 
     The purpose of positional encoding is to add information about the relative positions of tokens

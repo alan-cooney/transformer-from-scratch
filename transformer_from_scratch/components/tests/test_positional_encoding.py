@@ -3,7 +3,9 @@ import math
 
 import torch
 
-from transformer_from_scratch.components.positional_encoding import PositionalEncoding
+from transformer_from_scratch.components.positional_encoding import (
+    SinusoidalPositionalEncoding,
+)
 from transformer_from_scratch.types import BatchResidualStreamTT, ResidualStreamTT
 
 
@@ -22,7 +24,7 @@ def test_positional_encoding_each_token_unique():
     )
 
     # Add positional encoding
-    layer = PositionalEncoding(d_model, sequence_length)
+    layer = SinusoidalPositionalEncoding(d_model, sequence_length)
     encoding: ResidualStreamTT = layer(embedding).squeeze(0)
 
     # Check recursively that each position vector is unique
@@ -50,7 +52,7 @@ def test_linear_function_for_relative_positions():
         max_positions,
         d_model,
     )
-    layer = PositionalEncoding(d_model, max_positions)
+    layer = SinusoidalPositionalEncoding(d_model, max_positions)
     encoding: BatchResidualStreamTT = layer(embedding)
 
     # Compute the linear function matrix M
@@ -89,7 +91,7 @@ def test_positional_encoding_against_specific_position_and_dimension_scalar_calc
     expected = math.cos(position / (10000 ** ((dimension - 1) / d_model)))
 
     # Compare against the module
-    layer = PositionalEncoding(d_model, 1024)
+    layer = SinusoidalPositionalEncoding(d_model, 1024)
     encoding: BatchResidualStreamTT = layer(embedding)
     assert torch.allclose(
         encoding[0, position, dimension],
@@ -105,7 +107,7 @@ def test_numerically_stable():
     d_model: int = 768
     max_positions: int = 1024
     embedding: BatchResidualStreamTT = torch.zeros(1, max_positions, d_model) * 100
-    layer = PositionalEncoding(d_model, max_positions)
+    layer = SinusoidalPositionalEncoding(d_model, max_positions)
     encoding: BatchResidualStreamTT = layer(embedding)
     assert not torch.isnan(encoding).any()
 
@@ -120,7 +122,7 @@ def test_positional_encoding_same_across_batch_items():
         max_positions,
         d_model,
     )
-    layer = PositionalEncoding(d_model, max_positions)
+    layer = SinusoidalPositionalEncoding(d_model, max_positions)
     encoding: BatchResidualStreamTT = layer(embedding)
 
     # Check that the positional encoding is the same for both bach items
