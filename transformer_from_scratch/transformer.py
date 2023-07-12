@@ -60,6 +60,14 @@ class Transformer(nn.Module):
                 )
             )
 
+        # Expose config as public attributes
+        self.d_head = d_head
+        self.d_hidden = d_hidden
+        self.d_model = d_model
+        self.d_vocab = d_vocab
+        self.max_tokens = max_tokens
+        self.n_layers = n_layers
+
     def forward(self, tokens: BatchTokenIndicesTT) -> BatchLogitsTT:
         """Forward pass.
 
