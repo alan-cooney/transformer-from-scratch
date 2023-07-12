@@ -96,7 +96,7 @@ def train():
         per_device_eval_batch_size=32,
         evaluation_strategy="steps",
         eval_steps=5_000,
-        logging_steps=5_000,
+        logging_steps=10,
         gradient_accumulation_steps=8,
         num_train_epochs=1,
         weight_decay=0.1,
