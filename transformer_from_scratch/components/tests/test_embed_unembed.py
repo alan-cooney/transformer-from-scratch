@@ -20,14 +20,15 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset, random_split
+from transformer_from_scratch.components.config import TransformerConfig
 
 from transformer_from_scratch.components.embed_unembed import Embed, Unembed
 from transformer_from_scratch.types import (
-    BatchLogitsTT,
-    BatchResidualStreamTT,
-    BatchTokenIndicesTT,
-    LogitsTT,
-    TokenIndicesTT,
+    BatchLogits,
+    BatchResidualStream,
+    BatchTokenIndices,
+    Logits,
+    TokenIndices,
 )
 
 
@@ -43,8 +44,8 @@ class UnorderedIntegersDataset(Dataset):
     token with index n + 1, for each token (of index n) in the input.
     """
 
-    samples: list[TokenIndicesTT] = []
-    targets: list[LogitsTT] = []
+    samples: list[TokenIndices] = []
+    targets: list[Logits] = []
 
     def __init__(self, num_samples: int, d_vocab: int):
         """Initialise the dataset.
@@ -58,12 +59,12 @@ class UnorderedIntegersDataset(Dataset):
             # The sample is a random list of integers
             sample = list(range(0, d_vocab - 1))
             random.shuffle(sample)
-            sample_tensor: TokenIndicesTT = torch.tensor(sample, dtype=torch.long)
+            sample_tensor: TokenIndices = torch.tensor(sample, dtype=torch.long)
             self.samples.append(sample_tensor)
 
             # The target is this, plus 1 for each element in the sample
             target_indices = sample_tensor + 1
-            target_one_hot: LogitsTT = torch.nn.functional.one_hot(
+            target_one_hot: Logits = torch.nn.functional.one_hot(
                 target_indices, num_classes=d_vocab
             )
             self.targets.append(target_one_hot.float())
@@ -71,7 +72,7 @@ class UnorderedIntegersDataset(Dataset):
     def __len__(self):
         return len(self.samples)
 
-    def __getitem__(self, idx: int) -> Tuple[TokenIndicesTT, LogitsTT]:
+    def __getitem__(self, idx: int) -> Tuple[TokenIndices, Logits]:
         return self.samples[idx], self.targets[idx]
 
 
@@ -83,12 +84,13 @@ class ZeroLayerModel(nn.Module):
 
     def __init__(self, d_vocab: int, d_model: int):
         super().__init__()
-        self.embed = Embed(d_vocab, d_model)
-        self.unembed = Unembed(d_vocab, d_model)
+        config = TransformerConfig(d_vocab=d_vocab, d_model=d_model)
+        self.embed = Embed(config)
+        self.unembed = Unembed(config)
 
-    def forward(self, input: BatchTokenIndicesTT) -> BatchLogitsTT:
+    def forward(self, input: BatchTokenIndices) -> BatchLogits:
         """Forward Pass."""
-        residual_stream: BatchResidualStreamTT = self.embed(input)
+        residual_stream: BatchResidualStream = self.embed(input)
         return self.unembed(residual_stream)
 
 
@@ -134,7 +136,7 @@ def test_learn_order_integers() -> None:
     total = 0
     with torch.no_grad():
         for inputs, targets in test_loader:
-            logits: BatchLogitsTT = model(inputs)
+            logits: BatchLogits = model(inputs)
             _, predicted = torch.max(logits, 2)
             _, target_indices = torch.max(targets, 2)
             total += targets.size(0) * targets.size(1)

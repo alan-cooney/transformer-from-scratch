@@ -15,14 +15,15 @@ from torch import Tensor
 from torch.utils.data import DataLoader, Dataset, random_split
 
 from transformer_from_scratch.components.attention import (
-    BatchAttentionOutputTT,
-    BatchAttentionPatternTT,
-    BatchKeyTT,
-    BatchQueryTT,
-    BatchValueTT,
+    BatchAttentionOutput,
+    BatchAttentionPattern,
+    BatchKey,
+    BatchQuery,
+    BatchValue,
     MultiHeadAttention,
 )
-from transformer_from_scratch.types import BatchResidualStreamTT, ResidualStreamTT
+from transformer_from_scratch.components.config import TransformerConfig
+from transformer_from_scratch.types import BatchResidualStream, ResidualStream
 from transformer_from_scratch.types import TensorShapeLabels as D
 
 
@@ -31,14 +32,16 @@ class TestMask:
 
     def test_mask(self):
         """Test that it masks correctly"""
-        attention_pattern: BatchAttentionPatternTT = (
+        attention_pattern: BatchAttentionPattern = (
             torch.tensor([[1.0, 1], [1, 1]]).unsqueeze(0).unsqueeze(0)
         )
-        expected: BatchAttentionPatternTT = (
+        expected: BatchAttentionPattern = (
             torch.tensor([[1.0, float("-inf")], [1, 1]]).unsqueeze(0).unsqueeze(0)
         )
 
-        attention_layer = MultiHeadAttention(d_head=2, d_model=4, max_tokens=2)
+        attention_layer = MultiHeadAttention(
+            TransformerConfig(d_head=2, d_model=4, n_ctx=2)
+        )
         res = attention_layer.mask(attention_pattern)
 
         assert torch.allclose(res, expected)
@@ -50,9 +53,9 @@ class TestAttentionCalculation:
     def test_attention_simple(self):
         """Test a simple attention calculation"""
         # Create the query, key and value
-        query: BatchQueryTT = torch.tensor([[1.0, 2], [3, 4]]).unsqueeze(0).unsqueeze(0)
-        key: BatchKeyTT = torch.tensor([[5.0, 6], [7, 8]]).unsqueeze(0).unsqueeze(0)
-        value: BatchValueTT = (
+        query: BatchQuery = torch.tensor([[1.0, 2], [3, 4]]).unsqueeze(0).unsqueeze(0)
+        key: BatchKey = torch.tensor([[5.0, 6], [7, 8]]).unsqueeze(0).unsqueeze(0)
+        value: BatchValue = (
             torch.tensor([[9.0, 10], [11, 12]]).unsqueeze(0).unsqueeze(0)
         )
 
@@ -67,17 +70,19 @@ class TestAttentionCalculation:
         expected = torch.softmax(masked_attention_pattern, dim=-1) @ value
 
         # Create the attention layer
-        attention_layer = MultiHeadAttention(d_head=2, d_model=4, max_tokens=10)
+        attention_layer = MultiHeadAttention(
+            TransformerConfig(d_head=2, d_model=4, n_ctx=10)
+        )
 
         # Calculate the output
-        output: BatchAttentionOutputTT = attention_layer.attention(query, key, value)
+        output: BatchAttentionOutput = attention_layer.attention(query, key, value)
 
         # Check the output
         assert torch.allclose(output, expected)
 
 
-ResidualStreamTokenTT = Float[Tensor, f" {D.RESIDUAL_FEATURE}"]
-BatchResidualStreamTokenTT = Float[Tensor, f"{D.BATCH} {D.RESIDUAL_FEATURE}"]
+ResidualStreamToken = Float[Tensor, f" {D.RESIDUAL_FEATURE}"]
+BatchResidualStreamToken = Float[Tensor, f"{D.BATCH} {D.RESIDUAL_FEATURE}"]
 
 
 class FlaggedToken(Dataset):
@@ -103,13 +108,13 @@ class FlaggedToken(Dataset):
     token.
     """
 
-    samples: list[ResidualStreamTT] = []
-    targets: list[ResidualStreamTokenTT] = []
+    samples: list[ResidualStream] = []
+    targets: list[ResidualStreamToken] = []
 
     def __init__(self, sequence_length: int, d_model: int, num_samples: int):
         for _ in range(num_samples):
             # Source token
-            source_token: ResidualStreamTokenTT = torch.rand((1, d_model))
+            source_token: ResidualStreamToken = torch.rand((1, d_model))
             source_token[0, 0] = 10
 
             # Other tokens
@@ -147,7 +152,9 @@ class TestMultiHeadAttention:
         sequence_length = 10
 
         # Model
-        model = MultiHeadAttention(d_head, d_model, sequence_length)
+        model = MultiHeadAttention(
+            TransformerConfig(d_head=d_head, d_model=d_model, n_ctx=sequence_length)
+        )
 
         # Dataset
         dataset = FlaggedToken(sequence_length, d_model, samples)
@@ -165,9 +172,9 @@ class TestMultiHeadAttention:
         model.train()
         for inputs, targets in train_loader:
             optimizer.zero_grad()
-            outputs: BatchResidualStreamTT = model(inputs)
-            predicted_next_tokens: BatchResidualStreamTokenTT = outputs[:, -1, :]
-            loss: BatchResidualStreamTokenTT = criterion(
+            outputs: BatchResidualStream = model(inputs)
+            predicted_next_tokens: BatchResidualStreamToken = outputs[:, -1, :]
+            loss: BatchResidualStreamToken = criterion(
                 predicted_next_tokens, targets.squeeze(1)
             )
             loss.backward()

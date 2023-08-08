@@ -41,8 +41,8 @@ class TensorShapeLabels(StrEnum):  # type: ignore
     HEAD_FEATURE = "HEAD_FEATURE"
     """Head feature within a token."""
 
-    HIDDEN_FEATURE = "HIDDEN_FEATURE"
-    """Hidden feature within a token (aka `d_hidden`)."""
+    MLP_FEATURE = "MLP_FEATURE"
+    """MLP feature within a token (aka `d_mlp`)."""
 
     POSITION_MINUS_1 = "POSITION_MINUS_1"
     """Position within a prompt (that excludes the first or last token)."""
@@ -56,25 +56,25 @@ class TensorShapeLabels(StrEnum):  # type: ignore
 D = TensorShapeLabels  # pylint: disable=invalid-name
 
 
-TokenIndicesTT = Int[Tensor, f" {D.POSITION}"]
+TokenIndices = Int[Tensor, f" {D.POSITION}"]
 """Token Indices.
 
 Shape: (POSITION,)
 """
 
-BatchTokenIndicesTT = Int[Tensor, f"{D.BATCH} {D.POSITION}"]
+BatchTokenIndices = Int[Tensor, f"{D.BATCH} {D.POSITION}"]
 """Batch Token Indices.
 
 Shape: (BATCH, POSITION)
 """
 
-ResidualStreamTT = Float[Tensor, f"{D.POSITION} {D.RESIDUAL_FEATURE}"]
+ResidualStream = Float[Tensor, f"{D.POSITION} {D.RESIDUAL_FEATURE}"]
 """Residual Stream.
 
 Shape: (POSITION, RESIDUAL_FEATURE)
 """
 
-BatchResidualStreamTT = Float[
+BatchResidualStream = Float[
     Tensor,
     f"{D.BATCH} {D.POSITION} {D.RESIDUAL_FEATURE}",
 ]
@@ -83,13 +83,13 @@ BatchResidualStreamTT = Float[
 Shape: (BATCH, POSITION, RESIDUAL_FEATURE)
 """
 
-LogitsTT = Float[Tensor, f"{D.POSITION} {D.VOCAB}"]
+Logits = Float[Tensor, f"{D.POSITION} {D.VOCAB}"]
 """Logits.
 
 Shape: (POSITION, VOCAB)
 """
 
-BatchLogitsTT = Float[
+BatchLogits = Float[
     Tensor,
     f"{D.BATCH} {D.POSITION} {D.VOCAB}",
 ]

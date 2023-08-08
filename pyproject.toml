@@ -15,7 +15,7 @@ python = "^3.9"
 torch = "^2.0.1"
 fancy-einsum = "^0.0.3"
 einops = "^0.6.1"
-typeguard = "^4.0.0"
+typeguard = ">3.0.0"
 torchtext = "^0.15.2"
 torchdata = "^0.6.1"
 tqdm = "^4.65.0"
@@ -38,6 +38,7 @@ nvidia-nccl-cu11 = { version = "2.14.3", platform = 'linux' }
 nvidia-nvtx-cu11 = { version = "11.7.91", platform = 'linux' }
 triton = { version = "2.0.0", platform = 'linux' }
 tensorboard = "^2.13.0"
+lightning-bolts = "^0.7.0"
 
 [tool.poetry.group.dev.dependencies]
 bandit = "^1.7.5"
@@ -55,6 +56,12 @@ pylance = "^0.4.20"
 jupyterlab = "^4.0.2"
 toml = "^0.10.2"
 yapf = "^0.33.0"
+
+
+[[tool.poetry.source]]
+name = "torch-xla"
+url = "https://pip.repos.neuron.amazonaws.com"
+priority = "primary"
 
 [build-system]
 requires = ["poetry-core"]
