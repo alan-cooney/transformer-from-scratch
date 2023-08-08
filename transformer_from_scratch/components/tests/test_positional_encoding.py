@@ -2,9 +2,12 @@
 import math
 
 import torch
+from transformer_from_scratch.components.config import TransformerConfig
 
-from transformer_from_scratch.components.positional_encoding import PositionalEncoding
-from transformer_from_scratch.types import BatchResidualStreamTT, ResidualStreamTT
+from transformer_from_scratch.components.positional_encoding import (
+    SinusoidalPositionalEncoding,
+)
+from transformer_from_scratch.types import BatchResidualStream, ResidualStream
 
 
 def test_positional_encoding_each_token_unique():
@@ -15,15 +18,17 @@ def test_positional_encoding_each_token_unique():
 
     # Create a sequence (batch size 1) of all zeros (so that we'll end up with just the positional
     # encoding once it is encoded)
-    embedding: BatchResidualStreamTT = torch.zeros(
+    embedding: BatchResidualStream = torch.zeros(
         1,
         sequence_length,
         d_model,
     )
 
     # Add positional encoding
-    layer = PositionalEncoding(d_model, sequence_length)
-    encoding: ResidualStreamTT = layer(embedding).squeeze(0)
+    layer = SinusoidalPositionalEncoding(
+        TransformerConfig(d_model=d_model, n_ctx=sequence_length)
+    )
+    encoding: ResidualStream = layer(embedding).squeeze(0)
 
     # Check recursively that each position vector is unique
     for pos in range(sequence_length):
@@ -42,16 +47,18 @@ def test_linear_function_for_relative_positions():
     `initial_position`.
     """
     d_model: int = 4
-    max_positions: int = 10
+    n_ctx: int = 10
     relative_position: int = 2
     initial_position: int = 3
-    embedding: BatchResidualStreamTT = torch.zeros(
+    embedding: BatchResidualStream = torch.zeros(
         1,
-        max_positions,
+        n_ctx,
         d_model,
     )
-    layer = PositionalEncoding(d_model, max_positions)
-    encoding: BatchResidualStreamTT = layer(embedding)
+    layer = SinusoidalPositionalEncoding(
+        TransformerConfig(d_model=d_model, n_ctx=n_ctx)
+    )
+    encoding: BatchResidualStream = layer(embedding)
 
     # Compute the linear function matrix M
     angle_scaling_factors = relative_position / (
@@ -81,7 +88,7 @@ def test_positional_encoding_against_specific_position_and_dimension_scalar_calc
     """
     # Set the embedding to zeros
     d_model: int = 4
-    embedding: BatchResidualStreamTT = torch.zeros(1, 4, d_model)
+    embedding: BatchResidualStream = torch.zeros(1, 4, d_model)
 
     # Check for a specific position & dimension
     position: int = 2
@@ -89,8 +96,8 @@ def test_positional_encoding_against_specific_position_and_dimension_scalar_calc
     expected = math.cos(position / (10000 ** ((dimension - 1) / d_model)))
 
     # Compare against the module
-    layer = PositionalEncoding(d_model, 1024)
-    encoding: BatchResidualStreamTT = layer(embedding)
+    layer = SinusoidalPositionalEncoding(TransformerConfig(d_model=d_model, n_ctx=1024))
+    encoding: BatchResidualStream = layer(embedding)
     assert torch.allclose(
         encoding[0, position, dimension],
         torch.tensor(expected),
@@ -103,25 +110,29 @@ def test_numerically_stable():
     Check our Positional Encoding doesn't create any NaN values.
     """
     d_model: int = 768
-    max_positions: int = 1024
-    embedding: BatchResidualStreamTT = torch.zeros(1, max_positions, d_model) * 100
-    layer = PositionalEncoding(d_model, max_positions)
-    encoding: BatchResidualStreamTT = layer(embedding)
+    n_ctx: int = 1024
+    embedding: BatchResidualStream = torch.zeros(1, n_ctx, d_model) * 100
+    layer = SinusoidalPositionalEncoding(
+        TransformerConfig(d_model=d_model, n_ctx=n_ctx)
+    )
+    encoding: BatchResidualStream = layer(embedding)
     assert not torch.isnan(encoding).any()
 
 
 def test_positional_encoding_same_across_batch_items():
     """Test that the positional encoding is the same for each batch item."""
     d_model: int = 4
-    max_positions: int = 10
+    n_ctx: int = 10
     batch_items: int = 2
-    embedding: BatchResidualStreamTT = torch.zeros(
+    embedding: BatchResidualStream = torch.zeros(
         batch_items,
-        max_positions,
+        n_ctx,
         d_model,
     )
-    layer = PositionalEncoding(d_model, max_positions)
-    encoding: BatchResidualStreamTT = layer(embedding)
+    layer = SinusoidalPositionalEncoding(
+        TransformerConfig(d_model=d_model, n_ctx=n_ctx)
+    )
+    encoding: BatchResidualStream = layer(embedding)
 
     # Check that the positional encoding is the same for both bach items
     assert torch.allclose(encoding[0], encoding[1])

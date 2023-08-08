@@ -2,17 +2,18 @@
 import torch
 from jaxtyping import Float
 from torch import Tensor
+from transformer_from_scratch.components.config import TransformerConfig
 
-from transformer_from_scratch.types import BatchResidualStreamTT, ResidualStreamTT
+from transformer_from_scratch.types import BatchResidualStream, ResidualStream
 from transformer_from_scratch.types import TensorShapeLabels as D
 
-PosUnsqueezeTT = Float[Tensor, f"{D.POSITION} 1"]
-DModelHalfTT = Float[Tensor, f" {D.RESIDUAL_FEATURE_HALF}"]
-PosDModelHalfTT = Float[Tensor, f"{D.POSITION} {D.RESIDUAL_FEATURE_HALF}"]
+PosUnsqueeze = Float[Tensor, f"{D.POSITION} 1"]
+DModelHalf = Float[Tensor, f" {D.RESIDUAL_FEATURE_HALF}"]
+PosDModelHalf = Float[Tensor, f"{D.POSITION} {D.RESIDUAL_FEATURE_HALF}"]
 
 
-class PositionalEncoding(torch.nn.Module):
-    """Positional Encoding Module.
+class SinusoidalPositionalEncoding(torch.nn.Module):
+    """Sinusoidal Positional Encoding Module.
 
     The purpose of positional encoding is to add information about the relative positions of tokens
     within a sequence since the self-attention mechanism does not have any inherent notion of order.
@@ -122,29 +123,20 @@ class PositionalEncoding(torch.nn.Module):
     to achieve the desired behavior across the full embedding space.
     """
 
-    pos_encoding: ResidualStreamTT
+    pos_encoding: ResidualStream
 
-    def __init__(
-        self,
-        d_model: int,
-        max_tokens: int,
-    ) -> None:
-        """Initialize the positional encoding matrix.
-
-        Args:
-            d_model (int): Dimensionality of the residual stream
-            max_tokens (int): Maximum sequence length (number of input tokens)
-        """
+    def __init__(self, config: TransformerConfig) -> None:
+        """Initialize the positional encoding matrix."""
         super().__init__()
 
         # Create everything inside the parentheses
         # inner = pos/(10000^(2i/d_model) = pos/wavelength
-        positions: PosUnsqueezeTT = torch.arange(0, max_tokens).unsqueeze(1).float()
-        dimensions_2: DModelHalfTT = torch.arange(0, d_model, 2).float()
-        inner: PosDModelHalfTT = positions / (10000 ** (dimensions_2 / d_model))
+        positions: PosUnsqueeze = torch.arange(0, config.n_ctx).unsqueeze(1).float()
+        dimensions_2: DModelHalf = torch.arange(0, config.d_model, 2).float()
+        inner: PosDModelHalf = positions / (10000 ** (dimensions_2 / config.d_model))
 
         # Create interweaved positional encoding
-        pos_encoding = torch.zeros(max_tokens, d_model)
+        pos_encoding = torch.zeros(config.n_ctx, config.d_model)
         pos_encoding[:, 0::2] = torch.sin(inner)
         pos_encoding[:, 1::2] = torch.cos(inner)
 
@@ -153,19 +145,19 @@ class PositionalEncoding(torch.nn.Module):
         # value, whilst still re-using the same state dict.
         self.register_buffer("pos_encoding", pos_encoding, persistent=False)
 
-    def forward(self, embedding: BatchResidualStreamTT) -> BatchResidualStreamTT:
+    def forward(self, embedding: BatchResidualStream) -> BatchResidualStream:
         """Apply the positional encoding to the given input embedding.
 
         Args:
-            embedding (ResidualStreamTT): The input embedding with shape (batch_size, tokens,
+            embedding (ResidualStream): The input embedding with shape (batch_size, tokens,
                 d_model).
 
         Returns:
-            ResidualStreamTT: The output embedding with positional encoding applied, having the same
+            ResidualStream: The output embedding with positional encoding applied, having the same
                 shape as the input embedding (batch_size, tokens, d_model).
         """
         num_tokens_in_embedding: int = embedding.shape[-2]
-        trimmed_pos_encoding: ResidualStreamTT = self.pos_encoding[
+        trimmed_pos_encoding: ResidualStream = self.pos_encoding[
             :num_tokens_in_embedding,
             :,
         ]

@@ -7,9 +7,9 @@ from torch.utils.data import Dataset
 from transformer_from_scratch.train import evaluate, get_default_device, train_loop
 from transformer_from_scratch.transformer import Transformer
 from transformer_from_scratch.types import (
-    BatchLogitsTT,
-    BatchTokenIndicesTT,
-    TokenIndicesTT,
+    BatchLogits,
+    BatchTokenIndices,
+    TokenIndices,
 )
 
 
@@ -21,14 +21,14 @@ class SimpleModel(torch.nn.Module):
         self.output_indices = output_indices
         self.vocab_size = vocab_size
 
-    def forward(self, inputs: BatchTokenIndicesTT) -> BatchLogitsTT:
+    def forward(self, inputs: BatchTokenIndices) -> BatchLogits:
         """Forward pass
 
         Args:
-            x (BatchTokenIndicesTT): Inputs
+            x (BatchTokenIndices): Inputs
 
         Returns:
-            BatchLogitsTT: 100% log probabilities of the specified output token index, for all positions in all batches.
+            BatchLogits: 100% log probabilities of the specified output token index, for all positions in all batches.
         """
         output_indices = torch.fill(inputs, self.output_indices)
         return torch.nn.functional.one_hot(
@@ -39,11 +39,11 @@ class SimpleModel(torch.nn.Module):
 class MyDataset(Dataset):
     """Test Dataset."""
 
-    def __init__(self, inputs: BatchTokenIndicesTT):
+    def __init__(self, inputs: BatchTokenIndices):
         super().__init__()
-        self.inputs: BatchTokenIndicesTT = inputs
+        self.inputs: BatchTokenIndices = inputs
 
-    def __getitem__(self, index) -> Dict[str, TokenIndicesTT]:
+    def __getitem__(self, index) -> Dict[str, TokenIndices]:
         return {"input_ids": self.inputs[index]}
 
     def __len__(self):
@@ -67,7 +67,7 @@ class TestEvaluate:
     def test_fully_accurate_model(self):
         """Test that a model that always outputs the correct token index, gets 100% accuracy."""
         model = SimpleModel(output_indices=3, vocab_size=10)
-        inputs: BatchTokenIndicesTT = torch.tensor(
+        inputs: BatchTokenIndices = torch.tensor(
             [[3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3]]
         )
         test_dataset = MyDataset(inputs)
@@ -78,7 +78,7 @@ class TestEvaluate:
     def test_fully_inaccurate_model(self):
         """Test that a model that always outputs the incorrect token index, gets 100% accuracy."""
         model = SimpleModel(output_indices=2, vocab_size=10)
-        inputs: BatchTokenIndicesTT = torch.tensor(
+        inputs: BatchTokenIndices = torch.tensor(
             [[3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3]]
         )
         test_dataset = MyDataset(inputs)
@@ -93,7 +93,7 @@ class TestTrainLoop:
     def test_train_loop_executes(self, tmpdir):
         """Test that the train loop runs without error."""
         model = Transformer()
-        inputs: BatchTokenIndicesTT = torch.tensor(
+        inputs: BatchTokenIndices = torch.tensor(
             [[3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3]]
         )
         dataset = MyDataset(inputs)
@@ -111,7 +111,7 @@ class TestTrainLoop:
     def test_model_parameters_change(self, tmpdir):
         """Test that model parameters change after training."""
         model = Transformer()
-        inputs: BatchTokenIndicesTT = torch.randint(low=0, high=10, size=(4, 3))
+        inputs: BatchTokenIndices = torch.randint(low=0, high=10, size=(4, 3))
         dataset = MyDataset(inputs)
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=2)
         checkpoint_dir = Path(tmpdir)

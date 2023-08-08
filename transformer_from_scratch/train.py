@@ -13,11 +13,11 @@ from tqdm import tqdm
 import wandb
 from transformer_from_scratch.components.cross_entropy_loss import cross_entropy_loss
 from transformer_from_scratch.transformer import Transformer
-from transformer_from_scratch.types import BatchLogitsTT, BatchTokenIndicesTT
+from transformer_from_scratch.types import BatchLogits, BatchTokenIndices
 from transformer_from_scratch.types import TensorShapeLabels as D
 
-TargetIndicesTT = Int[Tensor, f" {D.POSITION_MINUS_1}"]
-BatchTargetIndicesTT = Int[Tensor, f"{D.BATCH} {D.POSITION_MINUS_1}"]
+TargetIndices = Int[Tensor, f" {D.POSITION_MINUS_1}"]
+BatchTargetIndices = Int[Tensor, f"{D.BATCH} {D.POSITION_MINUS_1}"]
 
 
 def get_default_device() -> torch.device:
@@ -53,9 +53,9 @@ def evaluate(
     total, correct = 0, 0
     with torch.no_grad():
         for batch in test_dataloader:
-            inputs: BatchTokenIndicesTT = batch["input_ids"].to(device)
-            inputs_except_last: BatchTargetIndicesTT = inputs[:, :-1]
-            labels: BatchTargetIndicesTT = inputs[:, 1:]
+            inputs: BatchTokenIndices = batch["input_ids"].to(device)
+            inputs_except_last: BatchTargetIndices = inputs[:, :-1]
+            labels: BatchTargetIndices = inputs[:, 1:]
             outputs = model(inputs_except_last)
             _, predicted = torch.max(outputs.data, -1)
             total += labels.numel()
@@ -119,11 +119,11 @@ def train_loop(
                     break
 
                 # Move inputs to the device
-                inputs: BatchTokenIndicesTT = batch["input_ids"].to(device)
+                inputs: BatchTokenIndices = batch["input_ids"].to(device)
 
                 # Forward pass
                 optimizer_initialized.zero_grad()
-                logits: BatchLogitsTT = model(inputs)
+                logits: BatchLogits = model(inputs)
                 loss = cross_entropy_loss(inputs, logits)
 
                 # Backward pass

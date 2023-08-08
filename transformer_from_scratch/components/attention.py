@@ -6,18 +6,19 @@ from einops import rearrange
 from fancy_einsum import einsum
 from jaxtyping import Float
 from torch import Tensor, nn
+from transformer_from_scratch.components.config import TransformerConfig
 
-from transformer_from_scratch.types import BatchResidualStreamTT
+from transformer_from_scratch.types import BatchResidualStream
 from transformer_from_scratch.types import TensorShapeLabels as D
 
-BatchQueryTT = Float[Tensor, f"{D.BATCH} {D.HEAD} DEST {D.HEAD_FEATURE}"]
-BatchKeyTT = Float[Tensor, f"{D.BATCH} {D.HEAD} SRC {D.HEAD_FEATURE}"]
-BatchKeyTransposeTT = Float[Tensor, f"{D.BATCH} {D.HEAD} {D.HEAD_FEATURE} SRC"]
-BatchValueTT = Float[Tensor, f"{D.BATCH} {D.HEAD} SRC {D.HEAD_FEATURE}"]
-BatchQKVWeightTT = Float[Tensor, f"{D.HEAD} {D.RESIDUAL_FEATURE} {D.HEAD_FEATURE}"]
+BatchQuery = Float[Tensor, f"{D.BATCH} {D.HEAD} DEST {D.HEAD_FEATURE}"]
+BatchKey = Float[Tensor, f"{D.BATCH} {D.HEAD} SRC {D.HEAD_FEATURE}"]
+BatchKeyTranspose = Float[Tensor, f"{D.BATCH} {D.HEAD} {D.HEAD_FEATURE} SRC"]
+BatchValue = Float[Tensor, f"{D.BATCH} {D.HEAD} SRC {D.HEAD_FEATURE}"]
+BatchQKVWeight = Float[Tensor, f"{D.HEAD} {D.RESIDUAL_FEATURE} {D.HEAD_FEATURE}"]
 BatchWeightOutput = Float[Tensor, f"{D.RESIDUAL_FEATURE} {D.RESIDUAL_FEATURE}"]
-BatchAttentionPatternTT = Float[Tensor, f"{D.BATCH} {D.HEAD} DEST SRC"]
-BatchAttentionOutputTT = Float[
+BatchAttentionPattern = Float[Tensor, f"{D.BATCH} {D.HEAD} DEST SRC"]
+BatchAttentionOutput = Float[
     Tensor, f"{D.BATCH} {D.HEAD} {D.POSITION} {D.HEAD_FEATURE}"
 ]
 
@@ -33,43 +34,32 @@ class MultiHeadAttention(nn.Module):
 
     minus_infinity_triangle: Float[Tensor, "max_tokens max_tokens"]
 
-    def __init__(
-        self,
-        d_head: int,
-        d_model: int,
-        max_tokens: int,
-    ) -> None:
-        """Initialize the MultiHeadAttention module.
-
-        Args:
-            d_head (int, optional): Number of head features per token.
-            d_model (int): Number of residual stream features per token.
-            max_tokens (int, optional): Maximum number of tokens in a sequence.
-        """
+    def __init__(self, config: TransformerConfig) -> None:
+        """Initialize the MultiHeadAttention module."""
         super().__init__()
 
         # Check the params
-        if d_model % d_head != 0:
+        if config.d_model % config.d_head != 0:
             raise ValueError("d_model must be a multiple of d_head")
 
         # Set number of heads
-        n_heads: int = int(d_model / d_head)
+        n_heads: int = int(config.d_model / config.d_head)
 
         # Store d_head sqrt for the attention calculation
-        self.d_head_sqrt: float = math.sqrt(d_head)
+        self.d_head_sqrt: float = math.sqrt(config.d_head)
 
         # Create the parameters
-        self.weight_query: BatchQKVWeightTT = nn.Parameter(
-            torch.empty(n_heads, d_model, d_head),
+        self.weight_query: BatchQKVWeight = nn.Parameter(
+            torch.empty(n_heads, config.d_model, config.d_head),
         )
-        self.weight_key: BatchQKVWeightTT = nn.Parameter(
-            torch.empty(n_heads, d_model, d_head),
+        self.weight_key: BatchQKVWeight = nn.Parameter(
+            torch.empty(n_heads, config.d_model, config.d_head),
         )
-        self.weight_value: BatchQKVWeightTT = nn.Parameter(
-            torch.empty(n_heads, d_model, d_head),
+        self.weight_value: BatchQKVWeight = nn.Parameter(
+            torch.empty(n_heads, config.d_model, config.d_head),
         )
         self.weight_out: BatchWeightOutput = nn.Parameter(
-            torch.empty(d_model, d_model),
+            torch.empty(config.d_model, config.d_model),
         )
 
         # Initialise the weights
@@ -81,13 +71,11 @@ class MultiHeadAttention(nn.Module):
         nn.init.xavier_normal_(self.weight_out)
 
         # Create the minus infinity mask
-        minus_infinity = torch.full((max_tokens, max_tokens), float("-inf"))
+        minus_infinity = torch.full((config.n_ctx, config.n_ctx), float("-inf"))
         minus_infinity_triangle = torch.triu(minus_infinity, diagonal=1)
         self.register_buffer("minus_infinity_triangle", minus_infinity_triangle)
 
-    def mask(
-        self, attention_pattern: BatchAttentionPatternTT
-    ) -> BatchAttentionPatternTT:
+    def mask(self, attention_pattern: BatchAttentionPattern) -> BatchAttentionPattern:
         """Mask the attention pattern.
 
         Each attention pattern is of shape (dest, src), and each element represents the attention
@@ -108,10 +96,10 @@ class MultiHeadAttention(nn.Module):
 
     def attention(
         self,
-        query: BatchQueryTT,
-        key: BatchKeyTT,
-        value: BatchValueTT,
-    ) -> BatchAttentionOutputTT:
+        query: BatchQuery,
+        key: BatchKey,
+        value: BatchValue,
+    ) -> BatchAttentionOutput:
         """Attention Calculation.
 
         The attention calculation does two things for each destination token - it both moves
@@ -123,24 +111,24 @@ class MultiHeadAttention(nn.Module):
         https://arxiv.org/pdf/1706.03762.pdf (p4)
 
         Args:
-            query (QueryTT): Query
-            key (KeyTT): Key
-            value (ValueTT): Value
+            query (Query): Query
+            key (Key): Key
+            value (Value): Value
 
         Returns:
-            AttentionOutputTT: Attention Output (softmax * value)
+            AttentionOutput: Attention Output (softmax * value)
         """
         # Calculate the numerator
-        key_transpose: BatchKeyTransposeTT = rearrange(
+        key_transpose: BatchKeyTranspose = rearrange(
             key,
             "batch head pos d_head -> batch head d_head pos",
         )
-        numerator: BatchAttentionPatternTT = query @ key_transpose
+        numerator: BatchAttentionPattern = query @ key_transpose
 
         # Apply softmax over the attention pattern
-        attention_pattern: BatchAttentionPatternTT = numerator / self.d_head_sqrt
-        masked_attention: BatchAttentionPatternTT = self.mask(attention_pattern)
-        softmax_part: BatchAttentionPatternTT = torch.softmax(
+        attention_pattern: BatchAttentionPattern = numerator / self.d_head_sqrt
+        masked_attention: BatchAttentionPattern = self.mask(attention_pattern)
+        softmax_part: BatchAttentionPattern = torch.softmax(
             masked_attention,
             dim=-1,  # Apply over the last (src) dimension
         )
@@ -151,38 +139,38 @@ class MultiHeadAttention(nn.Module):
             value,
         )
 
-    def forward(self, residual_stream: BatchResidualStreamTT) -> BatchResidualStreamTT:
+    def forward(self, residual_stream: BatchResidualStream) -> BatchResidualStream:
         """Attention layer forward pass.
 
         https://arxiv.org/pdf/1706.03762.pdf (p5)
         """
         # Create the query, key and value
-        query: BatchQueryTT = einsum(
+        query: BatchQuery = einsum(
             "batch pos d_model, head d_model d_head -> batch head pos d_head",
             residual_stream,
             self.weight_query,
         )
-        key: BatchKeyTT = einsum(
+        key: BatchKey = einsum(
             "batch pos d_model, head d_model d_head -> batch head pos d_head",
             residual_stream,
             self.weight_key,
         )
-        value: BatchValueTT = einsum(
+        value: BatchValue = einsum(
             "batch pos d_model, head d_model d_head -> batch head pos d_head",
             residual_stream,
             self.weight_value,
         )
 
         # Get the attention & concat
-        attn: BatchAttentionOutputTT = self.attention(query, key, value)
-        attn_concat: BatchResidualStreamTT = rearrange(
+        attn: BatchAttentionOutput = self.attention(query, key, value)
+        attn_concat: BatchResidualStream = rearrange(
             attn,
             # (head d_head) is the same size as d_model
             "batch head pos d_head -> batch pos (head d_head)",
         )
 
         # Multiply by W_O
-        multi_head_out: BatchResidualStreamTT = einsum(
+        multi_head_out: BatchResidualStream = einsum(
             "batch pos d_model_a, d_model_a d_model_b -> batch pos d_model_b",
             attn_concat,
             self.weight_out,
