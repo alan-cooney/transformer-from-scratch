@@ -171,7 +171,7 @@ class MultiHeadAttention(nn.Module):
 
         # Multiply by W_O
         multi_head_out: BatchResidualStream = einsum(
-            "batch pos d_model, d_model d_model -> batch pos d_model",
+            "batch pos d_model_a, d_model_a d_model_b -> batch pos d_model_b",
             attn_concat,
             self.weight_out,
         )

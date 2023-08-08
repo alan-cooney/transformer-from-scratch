@@ -146,10 +146,10 @@ class TestMultiHeadAttention:
         torch.manual_seed(seed)
 
         # Parameters
-        samples = 100000
-        d_model = 16
+        samples = 200000
+        d_model = 64
         d_head = int(d_model / num_heads)
-        sequence_length = 10
+        sequence_length = 5
 
         # Model
         model = MultiHeadAttention(
