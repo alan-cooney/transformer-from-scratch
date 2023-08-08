@@ -6,9 +6,10 @@ import torch
 from torch import nn
 
 from transformer_from_scratch.components.attention import MultiHeadAttention
-from transformer_from_scratch.components.feed_forward import FeedForward
+from transformer_from_scratch.components.config import TransformerConfig
+from transformer_from_scratch.components.mlp import MLP
 from transformer_from_scratch.components.layer import Layer
-from transformer_from_scratch.types import BatchResidualStreamTT
+from transformer_from_scratch.types import BatchResidualStream
 
 
 def test_layer_adds_attention_and_feed_forward_output(mocker):
@@ -18,10 +19,10 @@ def test_layer_adds_attention_and_feed_forward_output(mocker):
     seq_len = 3
     d_model = 4
     d_head = 2
-    d_hidden = 8
-    max_tokens = 1024
+    d_mlp = 8
+    n_ctx = 1024
 
-    residual_stream: BatchResidualStreamTT = torch.ones(
+    residual_stream: BatchResidualStream = torch.ones(
         batch_size, seq_len, d_model
     ).float()
 
@@ -33,14 +34,16 @@ def test_layer_adds_attention_and_feed_forward_output(mocker):
         return_value=torch.full_like(residual_stream, 0.1),
     )
     mocker.patch.object(
-        FeedForward, "forward", return_value=torch.full_like(residual_stream, 0.2)
+        MLP, "forward", return_value=torch.full_like(residual_stream, 0.2)
     )
 
     # Mock layer norm to not normalize
     mocker.patch.object(nn.LayerNorm, "forward", side_effect=lambda x: x)
 
     # Instantiate Layer and perform forward pass
-    layer = Layer(d_model, d_head, d_hidden, max_tokens)
+    layer = Layer(
+        TransformerConfig(d_model=d_model, d_head=d_head, d_mlp=d_mlp, n_ctx=n_ctx)
+    )
     output = layer(residual_stream)
 
     # Check if the output is correct

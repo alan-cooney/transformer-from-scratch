@@ -2,8 +2,9 @@
 from torch import nn
 
 from transformer_from_scratch.components.attention import MultiHeadAttention
-from transformer_from_scratch.components.feed_forward import FeedForward
-from transformer_from_scratch.types import BatchResidualStreamTT
+from transformer_from_scratch.components.config import TransformerConfig
+from transformer_from_scratch.components.mlp import MLP
+from transformer_from_scratch.types import BatchResidualStream
 
 
 class Layer(nn.Module):
@@ -18,37 +19,24 @@ class Layer(nn.Module):
     https://arxiv.org/pdf/1706.03762.pdf (p3)
     """
 
-    def __init__(
-        self,
-        d_model: int,
-        d_head: int,
-        d_hidden: int,
-        max_tokens: int,
-    ):
-        """Initialise the full layer.
-
-        Args:
-            d_model (int): Number of residual stream features per token.
-            d_head (int, optional): Number of head features per token.
-            d_hidden (int, optional): Number of hidden layer features per token.
-            max_tokens (int, optional): Maximum number of tokens in a sequence.
-        """
+    def __init__(self, config: TransformerConfig):
+        """Initialise the full layer."""
         super().__init__()
 
         # Create the feed forward and attention sub-layers
-        self.feed_forward = FeedForward(d_model=d_model, d_hidden=d_hidden)
-        self.layer_norm_ff = nn.LayerNorm(d_model)
-        self.attention = MultiHeadAttention(d_head, d_model, max_tokens)
-        self.layer_norm_attn = nn.LayerNorm(d_model)
+        self.feed_forward = MLP(config)
+        self.layer_norm_ff = nn.LayerNorm(config.d_model)
+        self.attention = MultiHeadAttention(config)
+        self.layer_norm_attn = nn.LayerNorm(config.d_model)
 
-    def forward(self, residual_stream: BatchResidualStreamTT) -> BatchResidualStreamTT:
+    def forward(self, residual_stream: BatchResidualStream) -> BatchResidualStream:
         """Forward pass.
 
         Args:
-            residual_stream (ResidualStreamTT): Residual stream
+            residual_stream (ResidualStream): Residual stream
 
         Returns:
-            ResidualStreamTT: Updated residual stream
+            ResidualStream: Updated residual stream
         """
         # Attention
         attn = self.attention(residual_stream)

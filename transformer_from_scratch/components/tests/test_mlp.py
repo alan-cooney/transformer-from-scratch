@@ -1,6 +1,6 @@
-"""Feed Forward Tests.
+"""MLP Tests.
 
-As the Feed Forward module is really just a standard two-layer feed forward network, a good test is
+As the MLP module is really just a standard two-layer feed forward network, a good test is
 that it can learn simple regression tasks."""
 import random
 from typing import Tuple, Type
@@ -9,9 +9,10 @@ import pytest
 import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader, Dataset, random_split
+from transformer_from_scratch.components.config import TransformerConfig
 
-from transformer_from_scratch.components.feed_forward import FeedForward
-from transformer_from_scratch.types import BatchLogitsTT, ResidualStreamTT
+from transformer_from_scratch.components.mlp import MLP
+from transformer_from_scratch.types import BatchLogits, ResidualStream
 
 
 class RegressionTaskDataset(Dataset):
@@ -40,7 +41,7 @@ class RegressionTaskDataset(Dataset):
         """
         return self.num_samples
 
-    def __getitem__(self, index: int) -> Tuple[ResidualStreamTT, ResidualStreamTT]:
+    def __getitem__(self, index: int) -> Tuple[ResidualStream, ResidualStream]:
         raise NotImplementedError
 
 
@@ -51,8 +52,8 @@ class IdentityDataset(RegressionTaskDataset):
     corresponding output neuron.
     """
 
-    def __getitem__(self, index) -> Tuple[ResidualStreamTT, ResidualStreamTT]:
-        sample: ResidualStreamTT = torch.rand(self.sequence_length, self.d_model)
+    def __getitem__(self, index) -> Tuple[ResidualStream, ResidualStream]:
+        sample: ResidualStream = torch.rand(self.sequence_length, self.d_model)
         return sample, sample
 
 
@@ -63,11 +64,11 @@ class BitReversalDataset(RegressionTaskDataset):
     [0, 1, 1, 0, 1, 0, 0, 1, 0, 1], the output should be [1, 0, 1, 0, 0, 1, 0, 1, 1, 0].
     """
 
-    def __getitem__(self, index) -> Tuple[ResidualStreamTT, ResidualStreamTT]:
-        sample: ResidualStreamTT = torch.randint(
+    def __getitem__(self, index) -> Tuple[ResidualStream, ResidualStream]:
+        sample: ResidualStream = torch.randint(
             0, 2, (self.sequence_length, self.d_model)
         ).float()
-        target: ResidualStreamTT = sample.flip(dims=[1])
+        target: ResidualStream = sample.flip(dims=[1])
         return sample, target
 
 
@@ -79,11 +80,11 @@ class OddEvenDataset(RegressionTaskDataset):
     bits in the last five positions.
     """
 
-    def __getitem__(self, index) -> Tuple[ResidualStreamTT, ResidualStreamTT]:
-        sample: ResidualStreamTT = torch.randint(
+    def __getitem__(self, index) -> Tuple[ResidualStream, ResidualStream]:
+        sample: ResidualStream = torch.randint(
             0, 2, (self.sequence_length, self.d_model)
         ).float()
-        target: ResidualStreamTT = torch.stack(
+        target: ResidualStream = torch.stack(
             [sample[:, 1::2], sample[:, ::2]], dim=1
         ).view(self.sequence_length, self.d_model)
         return sample, target
@@ -94,7 +95,7 @@ class OddEvenDataset(RegressionTaskDataset):
     [IdentityDataset, BitReversalDataset, OddEvenDataset],
 )
 def test_feed_forward_learns_on_dataset(dataset_class: Type[RegressionTaskDataset]):
-    """Test the feed forward network learns to solve the regression tasks.
+    """Test the MLP network learns to solve the regression tasks.
 
     Args:
         dataset_class (RegressionTaskDataset): Dataset to test.
@@ -110,10 +111,10 @@ def test_feed_forward_learns_on_dataset(dataset_class: Type[RegressionTaskDatase
     epochs = 10
     d_vocab = 10
     d_model = 10
-    d_hidden = 100
+    d_mlp = 100
 
     # Model
-    model = FeedForward(d_model, d_hidden)
+    model = MLP(TransformerConfig(d_model=d_model, d_mlp=d_mlp))
 
     # Dataset
     dataset = dataset_class(samples, d_vocab, d_model)
@@ -132,7 +133,7 @@ def test_feed_forward_learns_on_dataset(dataset_class: Type[RegressionTaskDatase
         model.train()
         for inputs, targets in train_loader:
             optimizer.zero_grad()
-            outputs: BatchLogitsTT = model(inputs)
+            outputs: BatchLogits = model(inputs)
             loss = criterion(outputs, targets)
             loss.backward()
             optimizer.step()
